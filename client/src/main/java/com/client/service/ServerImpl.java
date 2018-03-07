@@ -1,5 +1,6 @@
-package com.example.service;
+package com.client.service;
 
+import com.client.domain.SimpleMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +21,10 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
+
+import static com.client.utils.Utils.exchangeFromTo;
+import static com.client.utils.Utils.getBytesFromMessage;
+import static com.client.utils.Utils.getMessageFromBytes;
 
 @Component
 public class ServerImpl implements Server {
@@ -56,14 +61,14 @@ public class ServerImpl implements Server {
    * @throws Exception
    */
   public void runServer() throws Exception {
-    LOGGER.info("listening on port: {}", securePort);
+    LOGGER.info("[server]: listening on port {}", securePort);
     final SSLServerSocket sslServerSocket = getSSLServerSocket();
 
     ((Runnable)() -> {
       final Socket clientSocket;
       try {
         clientSocket = sslServerSocket.accept();
-        LOGGER.info("Connection from: {}", clientSocket.getRemoteSocketAddress());
+        LOGGER.info("[server]: connection from {}", clientSocket.getRemoteSocketAddress());
 
         try (
             final InputStream inputStream = clientSocket.getInputStream();
@@ -77,11 +82,13 @@ public class ServerImpl implements Server {
               break;
             }
             final byte[] response = Arrays.copyOfRange(buffer, 0, size);
-            final String responseStr = new String(response);
-            LOGGER.info("[server]: {}", responseStr);
+            SimpleMessage responseMapper = getMessageFromBytes(response);
+            LOGGER.info("[server]: {}", responseMapper);
+
+            responseMapper = exchangeFromTo(responseMapper);
 
             // send data back
-            outputStream.write(responseStr.getBytes());
+            outputStream.write(getBytesFromMessage(responseMapper));
             outputStream.flush();
           }
         } catch (Exception exc) {

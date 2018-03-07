@@ -1,5 +1,6 @@
-package com.example.service;
+package com.client.service;
 
+import com.client.domain.SimpleMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.Scanner;
+
+import static com.client.utils.Utils.createMessage;
+import static com.client.utils.Utils.getBytesFromMessage;
+import static com.client.utils.Utils.getMessageFromBytes;
 
 @Component
 public class ClientImpl implements Client {
@@ -83,18 +88,20 @@ public class ClientImpl implements Client {
 
       while(true) {
         final String line = new Scanner(System.in).nextLine();
-        outputStream.write(line.getBytes());
+        SimpleMessage messageMapper = createMessage(sslSocket, line);
+
+        outputStream.write(getBytesFromMessage(messageMapper));
         outputStream.flush();
 
         final byte[] buffer = new byte[BUFFER_SIZE];
         final int size = inputStream.read(buffer);
         if (size < 0) {
-          LOGGER.warn("[response]: no bytes to read");
+          LOGGER.warn("[client]: no bytes to read");
           break;
         }
         final byte[] response = Arrays.copyOfRange(buffer, 0, size);
-        final String responseStr = new String(response);
-        LOGGER.info("[response]: {}", responseStr);
+        SimpleMessage responseMapper = getMessageFromBytes(response);
+        LOGGER.info("[client]: {}", responseMapper);
       }
     } catch (Exception exc) {
       LOGGER.error("[error]: {}", exc.getMessage());
@@ -114,17 +121,19 @@ public class ClientImpl implements Client {
 
       while(true) {
         final String line = new Scanner(System.in).nextLine();
-        outputStream.write(line.getBytes());
+        SimpleMessage messageMapper = createMessage(socket, line);
+
+        outputStream.write(getBytesFromMessage(messageMapper));
         outputStream.flush();
 
         final int size = inputStream.read(buffer);
         if(size < 0) {
-          LOGGER.warn("[response]: no bytes to read");
+          LOGGER.warn("[client]: no bytes to read");
           break;
         }
         final byte[] response = Arrays.copyOfRange(buffer, 0, size);
-        final String responseStr = new String(response);
-        LOGGER.info("[response]: {}", responseStr);
+        SimpleMessage responseMessage = getMessageFromBytes(response);
+        LOGGER.info("[client]: {}", responseMessage);
       }
 
     } catch (Exception exc) {

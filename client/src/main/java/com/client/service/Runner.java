@@ -1,19 +1,22 @@
-package com.example.service;
+package com.client.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class Manager {
+public class Runner {
 
   @Autowired
-  public Manager(final Server server, final Client client){
+  public Runner(final Server server, final Client client){
+    // starts a server
     server.start();
     try {
-      Thread.sleep(1000);
+      /** wait a while until server gets ready */
+      Thread.sleep(500);
     } catch (Exception exc) {
       exc.printStackTrace();
     }
+    // starts a client
     client.start();
   }
 }
