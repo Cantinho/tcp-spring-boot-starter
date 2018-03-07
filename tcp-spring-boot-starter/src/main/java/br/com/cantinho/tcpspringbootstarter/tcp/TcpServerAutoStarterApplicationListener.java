@@ -1,5 +1,6 @@
 package br.com.cantinho.tcpspringbootstarter.tcp;
 
+import br.com.cantinho.tcpspringbootstarter.ApplicationConfig;
 import br.com.cantinho.tcpspringbootstarter.starter.TcpServerAutoConfiguration;
 import br.com.cantinho.tcpspringbootstarter.starter.TcpServerProperties;
 import org.slf4j.Logger;
@@ -9,6 +10,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
+
+import static br.com.cantinho.tcpspringbootstarter.ApplicationConfig.CURRENT_SERVER_IMPLEMENTATION;
 
 /**
  * TCP server auto starter application listener.
@@ -39,19 +42,14 @@ public class TcpServerAutoStarterApplicationListener implements ApplicationListe
    * Actually, instantiating.
    */
   @Autowired
-  @Qualifier(value = "TcpThreadPoolServer")
+  @Qualifier(value = CURRENT_SERVER_IMPLEMENTATION)
   private TcpServer server;
 
   /**
    * Builds a TCP server auto starter application listener.
    */
-//  public TcpServerAutoStarterApplicationListener() {
-//    if(secureEnabled) {
-//      server = new SecureTcpThreadPoolServer();
-//    } else {
-//      server = new TcpThreadPoolServer();
-//    }
-//  }
+  public TcpServerAutoStarterApplicationListener() {
+  }
 
   /**
    * When application event occurs.

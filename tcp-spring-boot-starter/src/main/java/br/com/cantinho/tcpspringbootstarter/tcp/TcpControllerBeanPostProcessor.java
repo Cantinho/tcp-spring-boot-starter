@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static br.com.cantinho.tcpspringbootstarter.ApplicationConfig.CURRENT_SERVER_IMPLEMENTATION;
+
 public class TcpControllerBeanPostProcessor implements BeanPostProcessor {
 
   /**
@@ -33,16 +35,8 @@ public class TcpControllerBeanPostProcessor implements BeanPostProcessor {
    * TCP server.
    */
   @Autowired
-  @Qualifier("TcpThreadPoolServer")
+  @Qualifier(CURRENT_SERVER_IMPLEMENTATION)
   private TcpServer server;
-
-//  public TcpControllerBeanPostProcessor() {
-//    if(secureEnabled) {
-//      server = new SecureTcpThreadPoolServer();
-//    } else {
-//      server = new TcpThreadPoolServer();
-//    }
-//  }
 
   /**
    * Post process before initialization.
@@ -55,6 +49,7 @@ public class TcpControllerBeanPostProcessor implements BeanPostProcessor {
   @Override
   public Object postProcessBeforeInitialization(final Object bean, final String beanName)
       throws BeansException {
+
 
     LOGGER.info("postProcessBeforeInitialization");
     Class<?> beanClass = bean.getClass();

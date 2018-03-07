@@ -15,13 +15,15 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static br.com.cantinho.tcpspringbootstarter.ApplicationConfig.SECURE_SERVER_IMPLEMENTATION;
+
 /**
  * Listens for connections on a specified port.
  * Reads a line from the newly-connected socket.
  * Converts the line to uppercase and responds on the socket.
  * Repeats the previous step until the connection is closed by the client.
  */
-@Component(value = "SecureTcpThreadPoolServer")
+@Component(value = SECURE_SERVER_IMPLEMENTATION)
 public class SecureTcpThreadPoolServer extends Thread implements TcpServer, TcpConnection.Listener {
 
   /**
