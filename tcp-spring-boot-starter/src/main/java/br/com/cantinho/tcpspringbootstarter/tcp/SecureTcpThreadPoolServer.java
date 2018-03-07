@@ -2,6 +2,7 @@ package br.com.cantinho.tcpspringbootstarter.tcp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -27,6 +28,12 @@ public class SecureTcpThreadPoolServer extends Thread implements TcpServer, TcpC
    * Default server port.
    */
   private static final int DEFAULT_PORT = 8080;
+
+  @Value( "${tcp.server.port}" )
+  private int defaultPort;
+
+  @Value( "${tcp.server.securePort}" )
+  private int securePort;
 
   /**
    * Logger.
@@ -237,7 +244,7 @@ public class SecureTcpThreadPoolServer extends Thread implements TcpServer, TcpC
     try {
       if (port == null) {
         LOGGER.info("Property tcp.server.port not found. Use default port 6969");
-        this.port = DEFAULT_PORT;
+        this.port = securePort;//DEFAULT_PORT;
       }
       this.port = port;
       serverSocket = new ServerSocket(this.port);

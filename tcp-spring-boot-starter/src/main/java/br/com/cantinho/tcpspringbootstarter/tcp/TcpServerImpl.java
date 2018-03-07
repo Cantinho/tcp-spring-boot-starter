@@ -2,6 +2,7 @@ package br.com.cantinho.tcpspringbootstarter.tcp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -17,6 +18,9 @@ import java.util.List;
 public class TcpServerImpl implements TcpServer, TcpConnection.Listener {
 
   private static final int DEFAULT_PORT = 6969;
+
+  @Value( "${tcp.server.port}" )
+  private int defaultPort;
 
   /**
    * Logger.
@@ -52,7 +56,7 @@ public class TcpServerImpl implements TcpServer, TcpConnection.Listener {
     try {
       if (port == null) {
         LOGGER.info("Property tcp.server.port not found. Use default port 1234");
-        port = DEFAULT_PORT;
+        port = defaultPort;//DEFAULT_PORT;
       }
       serverSocket = new ServerSocket(port);
       LOGGER.info("Server start at port " + port);
@@ -60,6 +64,11 @@ public class TcpServerImpl implements TcpServer, TcpConnection.Listener {
       e.printStackTrace();
       LOGGER.error("May be port " + port + " busy.");
     }
+  }
+
+  @Override
+  public void init(Integer port) {
+    setPort(port);
   }
 
   /**

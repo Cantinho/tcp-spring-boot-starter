@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
 import java.lang.reflect.Method;
@@ -20,6 +21,9 @@ public class TcpControllerBeanPostProcessor implements BeanPostProcessor {
    */
   private static final Logger LOGGER = LoggerFactory.getLogger(TcpControllerBeanPostProcessor.class);
 
+  @Value( "${tcp.server.secureEnabled}" )
+  private boolean secureEnabled;
+
   /**
    * All TCP controller cache.
    */
@@ -31,6 +35,14 @@ public class TcpControllerBeanPostProcessor implements BeanPostProcessor {
   @Autowired
   @Qualifier("TcpThreadPoolServer")
   private TcpServer server;
+
+//  public TcpControllerBeanPostProcessor() {
+//    if(secureEnabled) {
+//      server = new SecureTcpThreadPoolServer();
+//    } else {
+//      server = new TcpThreadPoolServer();
+//    }
+//  }
 
   /**
    * Post process before initialization.
