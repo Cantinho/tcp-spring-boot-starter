@@ -41,7 +41,10 @@ package br.com.cantinho.tcpspringbootstarter;
 
 import org.springframework.core.io.ClassPathResource;
 
-import java.net.*;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.*;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -49,9 +52,6 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import javax.net.ssl.*;
-
-import static javafx.scene.input.KeyCode.R;
 
 /*
  * This example demostrates how to use a SSLSocket as client to
@@ -73,7 +73,7 @@ public class SSLSocketClient {
       // creating a KeyStore containing our trusted CAs
       String keyStoreType = KeyStore.getDefaultType();
       KeyStore keyStore = KeyStore.getInstance("PKCS12");
-      InputStream keystoreInputStream = new ClassPathResource("keystore").getInputStream();;
+      InputStream keystoreInputStream = new ClassPathResource("keystore").getInputStream();
       keyStore.load(keystoreInputStream, "keystorecredentials".toCharArray());
       // creating a TrustManager that trusts the CAs in our KeyStore
       String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
@@ -102,7 +102,7 @@ public class SSLSocketClient {
   public static void main(String[] args) throws Exception {
 
     SSLSocketFactory factory = getSSLSocketFactory();
-    try(
+    try (
         SSLSocket socket = (SSLSocket) factory.createSocket("localhost", 8081)) {
 
       /*
@@ -139,9 +139,10 @@ public class SSLSocketClient {
       /*
        * Make sure there were no surprises
        */
-      if (out.checkError())
+      if (out.checkError()) {
         System.out.println(
             "SSLSocketClient:  java.io.PrintWriter error");
+      }
 
       /* read response */
       BufferedReader in = new BufferedReader(
@@ -149,8 +150,9 @@ public class SSLSocketClient {
               socket.getInputStream()));
 
       String inputLine;
-      while ((inputLine = in.readLine()) != null)
+      while ((inputLine = in.readLine()) != null) {
         System.out.println(inputLine);
+      }
 
       in.close();
       out.close();

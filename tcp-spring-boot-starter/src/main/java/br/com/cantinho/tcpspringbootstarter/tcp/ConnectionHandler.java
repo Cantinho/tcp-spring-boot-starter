@@ -26,6 +26,11 @@ public final class ConnectionHandler implements TcpConnection, Runnable {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionHandler.class);
 
   /**
+   * The socket connected to the client
+   */
+  private final Socket clientSocket;
+
+  /**
    * Input stream.
    */
   private InputStream input;
@@ -34,11 +39,6 @@ public final class ConnectionHandler implements TcpConnection, Runnable {
    * Output stream.
    */
   private OutputStream output;
-
-  /**
-   * The socket connected to the client
-   */
-  private final Socket clientSocket;
 
   /**
    * Tcp listeners.
@@ -67,37 +67,38 @@ public final class ConnectionHandler implements TcpConnection, Runnable {
    */
   @Override
   public void run() {
-    if(listeners == null || listeners.isEmpty()) {
+    if (listeners == null || listeners.isEmpty()) {
       LOGGER.warn("No one could receive any message.");
       throw new IllegalStateException("No server listener was registered.");
     }
 
     LOGGER.info("run");
     while (true) {
-      byte[] buffer = new byte[64*1024];
+      byte[] buffer = new byte[64 * 1024];
       try {
         int count = input.read(buffer);
         LOGGER.info("read - data count:" + count);
-        if(count > 0) {
+        if (count > 0) {
           byte[] bytes = Arrays.copyOf(buffer, count);
-          for(final Listener listener : listeners) {
+          for (final Listener listener : listeners) {
             LOGGER.info("onMessageReceive:" + bytes.length + " bytes.");
             listener.onMessageReceived(this, bytes);
           }
         } else {
           clientSocket.close();
-          for(final Listener listener : listeners) {
+          for (final Listener listener : listeners) {
             listener.onClientDisconnected(this);
           }
           break;
         }
       } catch (IOException ioe) {
-        LOGGER.trace("Could not receive message from TcpConnection for socket " + clientSocket, ioe);
+        LOGGER.trace("Could not receive message from TcpConnection for socket " + clientSocket,
+            ioe);
 
         closeStream(input);
         closeStream(output);
 
-        for(final Listener listener : listeners) {
+        for (final Listener listener : listeners) {
           listener.onClientDisconnected(this);
         }
         break;
@@ -107,11 +108,12 @@ public final class ConnectionHandler implements TcpConnection, Runnable {
 
   /**
    * Close
+   *
    * @param closeable
    */
   private void closeStream(final Closeable closeable) {
     try {
-      if(closeable != null) {
+      if (closeable != null) {
         closeable.close();
       }
     } catch (IOException e) {
@@ -138,7 +140,7 @@ public final class ConnectionHandler implements TcpConnection, Runnable {
   @Override
   public void send(final Object objectToSend) {
     LOGGER.info("send");
-    if(objectToSend instanceof byte[]) {
+    if (objectToSend instanceof byte[]) {
       byte[] data = (byte[]) objectToSend;
       try {
         output.write(data);
@@ -152,7 +154,9 @@ public final class ConnectionHandler implements TcpConnection, Runnable {
   public void addListener(final Listener listener) {
     LOGGER.info("addListener");
     listeners.add(listener);
-  };
+  }
+
+  ;
 
   @Override
   public void start() {

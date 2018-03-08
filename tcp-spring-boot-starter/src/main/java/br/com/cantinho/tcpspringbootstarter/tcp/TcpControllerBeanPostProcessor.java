@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
+import javax.annotation.PostConstruct;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +38,7 @@ public class TcpControllerBeanPostProcessor implements BeanPostProcessor {
   @Autowired
   @Qualifier(CURRENT_SERVER_IMPLEMENTATION)
   private TcpServer server;
+
 
   /**
    * Post process before initialization.

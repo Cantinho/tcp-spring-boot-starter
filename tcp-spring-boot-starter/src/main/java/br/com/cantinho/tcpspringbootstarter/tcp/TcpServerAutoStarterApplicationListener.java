@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
+import javax.annotation.PostConstruct;
+
 import static br.com.cantinho.tcpspringbootstarter.ApplicationConfig.CURRENT_SERVER_IMPLEMENTATION;
 
 /**
@@ -44,12 +46,6 @@ public class TcpServerAutoStarterApplicationListener implements ApplicationListe
   @Autowired
   @Qualifier(value = CURRENT_SERVER_IMPLEMENTATION)
   private TcpServer server;
-
-  /**
-   * Builds a TCP server auto starter application listener.
-   */
-  public TcpServerAutoStarterApplicationListener() {
-  }
 
   /**
    * When application event occurs.
