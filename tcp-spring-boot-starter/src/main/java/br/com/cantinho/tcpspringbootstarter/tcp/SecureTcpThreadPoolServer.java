@@ -3,13 +3,21 @@ package br.com.cantinho.tcpspringbootstarter.tcp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -27,6 +35,11 @@ import static br.com.cantinho.tcpspringbootstarter.ApplicationConfig.SECURE_SERV
 public class SecureTcpThreadPoolServer extends Thread implements TcpServer, TcpConnection.Listener {
 
   /**
+   * A logger instance
+   */
+  private static final Logger LOGGER = LoggerFactory.getLogger(SecureTcpThreadPoolServer.class.getCanonicalName());
+
+  /**
    * Default server port.
    */
   private static final int DEFAULT_PORT = 8080;
@@ -37,10 +50,12 @@ public class SecureTcpThreadPoolServer extends Thread implements TcpServer, TcpC
   @Value( "${tcp.server.securePort}" )
   private int securePort;
 
-  /**
-   * Logger.
-   */
-  private static final Logger LOGGER = LoggerFactory.getLogger(SecureTcpThreadPoolServer.class);
+  @Value( "${tcp.server.keystoreName}" )
+  private String keystoreName;
+
+  @Value( "${tcp.server.keystorePass}" )
+  private String keystorePass;
+
 
   /**
    * Pool of worker threads of unbounded size. A new thread will be created
@@ -86,12 +101,45 @@ public class SecureTcpThreadPoolServer extends Thread implements TcpServer, TcpC
       }
     });
     try {
-      this.serverSocket = new ServerSocket(port);
+
+      //this.serverSocket = new ServerSocket(port);
+      this.serverSocket = getSSLServerSocket();
       LOGGER.info("Server start at port " + port);
-    } catch (IOException e) {
-      LOGGER.warn("ignored\n" + e.getMessage());
+    } catch (TcpException exc) {
+      LOGGER.warn("ignored\n" + exc.getMessage());
       LOGGER.error("May be port " + port + " busy.");
     }
+  }
+
+  /**
+   * Creates a server socket for secure communication using provided keystore and credentials.
+   *
+   * @return a secure server socket.
+   * @throws Exception an Exception can be thrown if ssl server socket cannot be created.
+   */
+  private SSLServerSocket getSSLServerSocket() throws TcpException {
+    try {
+      final KeyStore keyStore = KeyStore.getInstance("PKCS12");
+      final InputStream keystoreInputStream = new ClassPathResource(keystoreName).getInputStream();
+      keyStore.load(keystoreInputStream, keystorePass.toCharArray());
+
+      KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+      kmf.init(keyStore, keystorePass.toCharArray());
+
+      final SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(kmf.getKeyManagers(), null, null);
+      final SSLServerSocketFactory socketFactory = sslContext.getServerSocketFactory();
+      if(null != socketFactory) {
+        return (SSLServerSocket) socketFactory.createServerSocket(securePort);
+      }
+    } catch (CertificateException | NoSuchAlgorithmException | KeyStoreException |
+        KeyManagementException | IOException exc) {
+      LOGGER.error("[error]: {}", exc.getMessage());
+      throw new TcpException("Could not establish secure communication.", exc);
+    } catch (UnrecoverableKeyException exc) {
+      LOGGER.error("[error]: {}", exc.getMessage());
+    }
+    throw new TcpException("Could not establish secure communication.");
   }
 
   /**
