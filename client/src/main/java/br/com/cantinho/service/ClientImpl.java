@@ -52,7 +52,7 @@ public class ClientImpl implements Client {
   /**
    * A integer representing secure server port number.
    */
-  @Value("${secure.server.port}")
+  @Value("${server.secure.port}")
   private int securePort;
 
   /**
@@ -60,6 +60,18 @@ public class ClientImpl implements Client {
    */
   @Value("${client.secure.communication}")
   private boolean isSecureCommunication;
+
+  /**
+   * A string representing keystore file name.
+   */
+  @Value("${keystore.file.name}")
+  private String keystore;
+
+  /**
+   * A string representing keystore pass.
+   */
+  @Value("${keystore.pass}")
+  private String pass;
 
   /**
    * A start point for client.
@@ -148,8 +160,8 @@ public class ClientImpl implements Client {
     try {
       // creating a KeyStore containing our trusted CAs
       final KeyStore keyStore = KeyStore.getInstance("PKCS12");
-      final InputStream keystoreInputStream = new ClassPathResource("keystore").getInputStream();
-      keyStore.load(keystoreInputStream, "pass".toCharArray());
+      final InputStream keystoreInputStream = new ClassPathResource(keystore).getInputStream();
+      keyStore.load(keystoreInputStream, pass.toCharArray());
       // creating a TrustManager that trusts the CAs in our KeyStore
       final String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
       final TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);

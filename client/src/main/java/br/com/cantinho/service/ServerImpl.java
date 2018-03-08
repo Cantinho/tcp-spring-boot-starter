@@ -39,8 +39,20 @@ public class ServerImpl implements Server {
   /**
    * A integer representing secure server port number.
    */
-  @Value("${secure.server.port}")
+  @Value("${server.secure.port}")
   private int securePort;
+
+  /**
+   * A string representing keystore file name.
+   */
+  @Value("${keystore.file.name}")
+  private String keystore;
+
+  /**
+   * A string representing keystore pass.
+   */
+  @Value("${keystore.pass}")
+  private String pass;
 
   /**
    * A start point for server.
@@ -107,11 +119,11 @@ public class ServerImpl implements Server {
   private SSLServerSocket getSSLServerSocket() throws Exception {
     try {
       final KeyStore keyStore = KeyStore.getInstance("PKCS12");
-      final InputStream keystoreInputStream = new ClassPathResource("keystore").getInputStream();
-      keyStore.load(keystoreInputStream, "pass".toCharArray());
+      final InputStream keystoreInputStream = new ClassPathResource(keystore).getInputStream();
+      keyStore.load(keystoreInputStream, pass.toCharArray());
 
       KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-      kmf.init(keyStore, "pass".toCharArray());
+      kmf.init(keyStore, pass.toCharArray());
 
       final SSLContext sslContext = SSLContext.getInstance("TLS");
       sslContext.init(kmf.getKeyManagers(), null, null);
