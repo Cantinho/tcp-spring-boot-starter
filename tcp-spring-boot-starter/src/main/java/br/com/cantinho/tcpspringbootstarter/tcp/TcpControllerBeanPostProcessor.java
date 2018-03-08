@@ -5,13 +5,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
+import javax.annotation.PostConstruct;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static br.com.cantinho.tcpspringbootstarter.ApplicationConfig.CURRENT_SERVER_IMPLEMENTATION;
 
 public class TcpControllerBeanPostProcessor implements BeanPostProcessor {
 
@@ -19,6 +23,9 @@ public class TcpControllerBeanPostProcessor implements BeanPostProcessor {
    * Logger.
    */
   private static final Logger LOGGER = LoggerFactory.getLogger(TcpControllerBeanPostProcessor.class);
+
+  @Value( "${tcp.server.secureEnabled}" )
+  private boolean secureEnabled;
 
   /**
    * All TCP controller cache.
@@ -29,8 +36,9 @@ public class TcpControllerBeanPostProcessor implements BeanPostProcessor {
    * TCP server.
    */
   @Autowired
-  @Qualifier("TcpThreadPoolServer")
+  @Qualifier(CURRENT_SERVER_IMPLEMENTATION)
   private TcpServer server;
+
 
   /**
    * Post process before initialization.
@@ -43,6 +51,7 @@ public class TcpControllerBeanPostProcessor implements BeanPostProcessor {
   @Override
   public Object postProcessBeforeInitialization(final Object bean, final String beanName)
       throws BeansException {
+
 
     LOGGER.info("postProcessBeforeInitialization");
     Class<?> beanClass = bean.getClass();

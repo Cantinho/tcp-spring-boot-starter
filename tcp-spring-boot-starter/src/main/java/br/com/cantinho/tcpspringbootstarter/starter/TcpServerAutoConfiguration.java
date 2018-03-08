@@ -1,6 +1,9 @@
 package br.com.cantinho.tcpspringbootstarter.starter;
 
 import br.com.cantinho.tcpspringbootstarter.tcp.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -12,6 +15,14 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties(TcpServerProperties.class)
 @ConditionalOnProperty(prefix = "tcp.server", name = {"port", "autoStart"})
 public class TcpServerAutoConfiguration {
+
+  /**
+   * Logger.
+   */
+  private static final Logger LOGGER = LoggerFactory.getLogger(TcpServerAutoConfiguration.class);
+
+  @Value( "${tcp.server.secureEnabled}" )
+  private boolean secureEnabled;
 
   /**
    * Creates a new TCP Server AutoStarterListener.
@@ -40,7 +51,13 @@ public class TcpServerAutoConfiguration {
    */
   @Bean
   TcpServer tcpServer() {
-    return new TcpThreadPoolServer();
+    LOGGER.info("tcpServer:" + secureEnabled);
+    if(secureEnabled) {
+      return new SecureTcpThreadPoolServer();
+    } else {
+      return new TcpThreadPoolServer();
+    }
+
   }
 
 }

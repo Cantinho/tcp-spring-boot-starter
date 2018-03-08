@@ -1,5 +1,7 @@
 package br.com.cantinho.tcpspringbootstarter.tcp;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import java.util.List;
 
 /**
@@ -20,6 +22,13 @@ public interface TcpServer {
    * @param port
    */
   void setPort(final Integer port);
+
+  /**
+   * Inits server on port.
+   *
+   * @param port
+   */
+  void init(final Integer port);
 
   /**
    * Starts the server.
