@@ -1,4 +1,4 @@
-package com.client;
+package br.com.cantinho;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

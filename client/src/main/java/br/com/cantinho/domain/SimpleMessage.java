@@ -1,4 +1,4 @@
-package com.client.domain;
+package br.com.cantinho.domain;
 
 public class SimpleMessage extends BaseMessage {
 

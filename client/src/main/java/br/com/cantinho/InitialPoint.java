@@ -1,4 +1,4 @@
-package com.client;
+package br.com.cantinho;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,4 +1,4 @@
-package com.client.service;
+package br.com.cantinho.service;
 
 public interface Server {
 

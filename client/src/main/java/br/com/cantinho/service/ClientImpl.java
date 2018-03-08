@@ -1,6 +1,7 @@
-package com.client.service;
+package br.com.cantinho.service;
 
-import com.client.domain.SimpleMessage;
+import br.com.cantinho.domain.SimpleMessage;
+import br.com.cantinho.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,10 +23,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.Scanner;
-
-import static com.client.utils.Utils.createMessage;
-import static com.client.utils.Utils.getBytesFromMessage;
-import static com.client.utils.Utils.getMessageFromBytes;
 
 @Component
 public class ClientImpl implements Client {
@@ -88,9 +85,9 @@ public class ClientImpl implements Client {
 
       while(true) {
         final String line = new Scanner(System.in).nextLine();
-        SimpleMessage messageMapper = createMessage(sslSocket, line);
+        SimpleMessage messageMapper = Utils.createMessage(sslSocket, line);
 
-        outputStream.write(getBytesFromMessage(messageMapper));
+        outputStream.write(Utils.getBytesFromMessage(messageMapper));
         outputStream.flush();
 
         final byte[] buffer = new byte[BUFFER_SIZE];
@@ -100,7 +97,7 @@ public class ClientImpl implements Client {
           break;
         }
         final byte[] response = Arrays.copyOfRange(buffer, 0, size);
-        SimpleMessage responseMapper = getMessageFromBytes(response);
+        SimpleMessage responseMapper = Utils.getMessageFromBytes(response);
         LOGGER.info("[client]: {}", responseMapper);
       }
     } catch (Exception exc) {
@@ -121,9 +118,9 @@ public class ClientImpl implements Client {
 
       while(true) {
         final String line = new Scanner(System.in).nextLine();
-        SimpleMessage messageMapper = createMessage(socket, line);
+        SimpleMessage messageMapper = Utils.createMessage(socket, line);
 
-        outputStream.write(getBytesFromMessage(messageMapper));
+        outputStream.write(Utils.getBytesFromMessage(messageMapper));
         outputStream.flush();
 
         final int size = inputStream.read(buffer);
@@ -132,7 +129,7 @@ public class ClientImpl implements Client {
           break;
         }
         final byte[] response = Arrays.copyOfRange(buffer, 0, size);
-        SimpleMessage responseMessage = getMessageFromBytes(response);
+        SimpleMessage responseMessage = Utils.getMessageFromBytes(response);
         LOGGER.info("[client]: {}", responseMessage);
       }
 

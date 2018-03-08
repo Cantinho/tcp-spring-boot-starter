@@ -1,6 +1,6 @@
-package com.client.utils;
+package br.com.cantinho.utils;
 
-import com.client.domain.SimpleMessage;
+import br.com.cantinho.domain.SimpleMessage;
 import com.google.gson.Gson;
 
 import java.net.Socket;

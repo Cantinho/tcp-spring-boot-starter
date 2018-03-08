@@ -1,6 +1,7 @@
-package com.client.service;
+package br.com.cantinho.service;
 
-import com.client.domain.SimpleMessage;
+import br.com.cantinho.utils.Utils;
+import br.com.cantinho.domain.SimpleMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,10 +22,6 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
-
-import static com.client.utils.Utils.exchangeFromTo;
-import static com.client.utils.Utils.getBytesFromMessage;
-import static com.client.utils.Utils.getMessageFromBytes;
 
 @Component
 public class ServerImpl implements Server {
@@ -82,13 +79,13 @@ public class ServerImpl implements Server {
               break;
             }
             final byte[] response = Arrays.copyOfRange(buffer, 0, size);
-            SimpleMessage responseMapper = getMessageFromBytes(response);
+            SimpleMessage responseMapper = Utils.getMessageFromBytes(response);
             LOGGER.info("[server]: {}", responseMapper);
 
-            responseMapper = exchangeFromTo(responseMapper);
+            responseMapper = Utils.exchangeFromTo(responseMapper);
 
             // send data back
-            outputStream.write(getBytesFromMessage(responseMapper));
+            outputStream.write(Utils.getBytesFromMessage(responseMapper));
             outputStream.flush();
           }
         } catch (Exception exc) {

@@ -1,4 +1,4 @@
-package com.client.service;
+package br.com.cantinho.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
