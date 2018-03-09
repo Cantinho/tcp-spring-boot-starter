@@ -171,6 +171,9 @@ public class SecureTcpThreadPoolServer extends Thread implements TcpServer, TcpC
 
         final ConnectionHandler handler = new ConnectionHandler(clientSocket);
         if (clientSocket.isConnected()) {
+          LOGGER.info("isConnected");
+
+          this.onClientConnected(handler);
           handler.addListener(this);
           this.workers.execute(handler);
         } else {
@@ -249,6 +252,7 @@ public class SecureTcpThreadPoolServer extends Thread implements TcpServer, TcpC
    */
   @Override
   public void onClientConnected(TcpConnection connection) {
+    LOGGER.info("onClientConnected");
     LOGGER.info("New connection! " + connection.getSocketAddress().getHostName() + ": " +
         connection.getSocketAddress().getPort() + ".");
     connections.add(connection);

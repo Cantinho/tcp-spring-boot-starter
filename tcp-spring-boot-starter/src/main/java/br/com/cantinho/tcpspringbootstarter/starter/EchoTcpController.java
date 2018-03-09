@@ -1,10 +1,15 @@
 package br.com.cantinho.tcpspringbootstarter.starter;
 
+import br.com.cantinho.tcpspringbootstarter.clients.ClientHandler;
+import br.com.cantinho.tcpspringbootstarter.converters.DataHandler;
+import br.com.cantinho.tcpspringbootstarter.filters.FilterHandler;
 import br.com.cantinho.tcpspringbootstarter.tcp.TcpConnection;
 import br.com.cantinho.tcpspringbootstarter.tcp.TcpController;
-import br.com.cantinho.tcpspringbootstarter.tcp.TcpThreadPoolServer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 /**
  * Echo TCP controller.
@@ -12,7 +17,23 @@ import org.slf4j.LoggerFactory;
 @TcpController
 public class EchoTcpController {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(TcpThreadPoolServer.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(EchoTcpController.class);
+
+  final FilterHandler filterHandler;
+  final ClientHandler clientHandler;
+  final DataHandler dataHandler;
+
+  @Autowired
+  public EchoTcpController(
+      final FilterHandler filterHandler,
+      final ClientHandler clientHandler,
+      final DataHandler dataHandler
+  ) {
+    this.filterHandler = filterHandler;
+    this.clientHandler = clientHandler;
+    this.dataHandler = dataHandler;
+  }
+
 
   /**
    * Send the message received from client.
@@ -20,9 +41,9 @@ public class EchoTcpController {
    * @param connection
    * @param data
    */
-  public void receiveData(final TcpConnection connection, byte[] data) {
+  public void receiveData(final TcpConnection connection, final byte[] data) {
     final String answer = new String(data);
-    LOGGER.info("New data: " + answer);
+    LOGGER.info("receiveData: " + answer);
     connection.send(answer.getBytes());
   }
 
@@ -32,7 +53,16 @@ public class EchoTcpController {
    * @param connection
    */
   public void connect(final TcpConnection connection) {
-    LOGGER.info("New connection " + connection.getSocketAddress().getHostName());
+    LOGGER.info("New connection \t");
+    LOGGER.info("New connection::hostname " + connection.getSocketAddress().getHostName());
+    LOGGER.info("New connection::address " + connection.getSocketAddress().getHostName());
+    LOGGER.info("New connection::port " + connection.getSocketAddress().getPort());
+    LOGGER.info("New connection::add.canonicalHostName " + connection.getSocketAddress()
+        .getAddress().getCanonicalHostName());
+    LOGGER.info("New connection::add.hostAddress " + connection.getSocketAddress()
+        .getAddress().getHostAddress());
+    LOGGER.info("New connection::add.hostName " + connection.getSocketAddress()
+        .getAddress().getHostName());
   }
 
   /**

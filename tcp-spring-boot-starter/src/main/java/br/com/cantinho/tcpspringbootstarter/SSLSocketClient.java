@@ -52,6 +52,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.util.Arrays;
 
 /*
  * This example demostrates how to use a SSLSocket as client to
@@ -99,7 +100,7 @@ public class SSLSocketClient {
     return null;
   }
 
-  public static void main(String[] args) throws Exception {
+  public static void mains(String[] args) throws Exception {
 
     SSLSocketFactory factory = getSSLSocketFactory();
     try (
@@ -162,4 +163,23 @@ public class SSLSocketClient {
       e.printStackTrace();
     }
   }
+
+  public static void main(String[] args) {
+
+    String ver = "v1";
+    byte[] bytes = {0x01, 0x0F};
+    boolean bool = true;
+
+    parse(ver, bytes, bool);
+
+  }
+
+  public static void parse(final Object... args) {
+    String ver = (String) args[0];
+    byte[] bytes = (byte[]) args[1];
+    boolean bool = (boolean) args[2];
+
+    System.out.println("ver:"+ver+";bytes:"+ Arrays.toString(bytes)+";bool:"+bool);
+  }
+
 }

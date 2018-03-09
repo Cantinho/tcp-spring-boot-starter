@@ -9,7 +9,7 @@ public class Runner {
   @Autowired
   public Runner(final Server server, final Client client){
     // starts a server
-    server.start();
+    //server.start();
     try {
       /** wait a while until server gets ready */
       Thread.sleep(500);

@@ -121,6 +121,7 @@ public class TcpThreadPoolServer extends Thread implements TcpServer, TcpConnect
 
         final ConnectionHandler handler = new ConnectionHandler(clientSocket);
         if (clientSocket.isConnected()) {
+          this.onClientConnected(handler);
           handler.addListener(this);
           this.workers.execute(handler);
         } else {
