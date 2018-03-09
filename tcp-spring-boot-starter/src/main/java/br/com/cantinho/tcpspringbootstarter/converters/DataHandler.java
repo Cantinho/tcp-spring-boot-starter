@@ -1,6 +1,7 @@
 package br.com.cantinho.tcpspringbootstarter.converters;
 
 import br.com.cantinho.tcpspringbootstarter.tcp.TcpConnection;
+import br.com.cantinho.tcpspringbootstarter.utils.ClientUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
@@ -13,7 +14,7 @@ public abstract class DataHandler {
 
   private List<IConverter> dataConverters = new ArrayList<>();
 
-  public String onIncomingData(final String connectionUuid, final byte[] data) throws
+  public String onIncomingData(final String uci, final byte[] data) throws
       DataHandlerException {
     final Versionable versionable = getVersionable(data);
     if(dataConverters.isEmpty()) {
@@ -24,6 +25,7 @@ public abstract class DataHandler {
       if(equals) {
         final String version = converter.version();
         final Object message = converter.parse(data);
+
 
       }
     }

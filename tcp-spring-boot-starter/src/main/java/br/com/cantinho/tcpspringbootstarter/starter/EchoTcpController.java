@@ -53,16 +53,7 @@ public class EchoTcpController {
    * @param connection
    */
   public void connect(final TcpConnection connection) {
-    LOGGER.info("New connection \t");
-    LOGGER.info("New connection::hostname " + connection.getSocketAddress().getHostName());
-    LOGGER.info("New connection::address " + connection.getSocketAddress().getHostName());
-    LOGGER.info("New connection::port " + connection.getSocketAddress().getPort());
-    LOGGER.info("New connection::add.canonicalHostName " + connection.getSocketAddress()
-        .getAddress().getCanonicalHostName());
-    LOGGER.info("New connection::add.hostAddress " + connection.getSocketAddress()
-        .getAddress().getHostAddress());
-    LOGGER.info("New connection::add.hostName " + connection.getSocketAddress()
-        .getAddress().getHostName());
+    clientHandler.onConnect(connection);
   }
 
   /**
@@ -71,7 +62,7 @@ public class EchoTcpController {
    * @param connection
    */
   public void disconnect(final TcpConnection connection) {
-    LOGGER.info("Disconnect " + connection.getSocketAddress().getHostName());
+    clientHandler.onDisconnect(connection);
   }
 
 }
