@@ -1,9 +1,12 @@
 package br.com.cantinho.tcpspringbootstarter.assigners;
 
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.IConverter;
+import br.com.cantinho.tcpspringbootstarter.assigners.converters.V1Data;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.Versionable;
 import br.com.cantinho.tcpspringbootstarter.clients.Transmitter;
 import br.com.cantinho.tcpspringbootstarter.data.DataHandlerException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,6 +75,17 @@ public class EchoApplication extends Assignable {
     final String uci = (String) parameters[0];
     final Object data = parameters[1];
     final Class clazz = data.getClass();
+
+    final ObjectMapper mapper = new ObjectMapper();
+    //Object to JSON in String
+    try {
+      final String jsonInString = mapper.writeValueAsString(data);
+      System.out.println("json:"+jsonInString);
+      // Transmitting the message back to client.
+      transmitter.send(uci, jsonInString.getBytes());
+    } catch (JsonProcessingException e) {
+      e.printStackTrace();
+    }
     //TODO transmitter.send();
 
   }
@@ -84,5 +98,25 @@ public class EchoApplication extends Assignable {
   @Override
   public Object getAddress() {
     return null;
+  }
+
+  public static void main(String[] args) {
+    final String source = "from";
+    final String destination = "to";
+    final String payload = "data";
+    V1Data data = new V1Data(source, destination, payload);
+
+    Object object = data;
+    System.out.println(object.getClass());
+
+    ObjectMapper mapper = new ObjectMapper();
+    //Object to JSON in String
+    try {
+      String jsonInString = mapper.writeValueAsString(data);
+      System.out.println("json:{"+jsonInString+"]");
+    } catch (JsonProcessingException e) {
+      e.printStackTrace();
+    }
+
   }
 }
