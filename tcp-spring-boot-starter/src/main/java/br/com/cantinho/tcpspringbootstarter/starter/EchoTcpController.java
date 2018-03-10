@@ -60,6 +60,7 @@ public class EchoTcpController {
 
   /**
    * Sends the message received from client.
+   * Method must start with {@code receive}.
    *
    * @param connection
    * @param data
@@ -81,6 +82,7 @@ public class EchoTcpController {
 
   /**
    * When it receives a connection.
+   * Method must start with {@code connect}.
    *
    * @param connection
    */
@@ -95,6 +97,7 @@ public class EchoTcpController {
 
   /**
    * When disconnect event occurs.
+   * Method must start with {@code disconnect}.
    *
    * @param connection
    */

@@ -15,8 +15,21 @@ public abstract class DataHandler {
    */
   private final static Logger LOGGER = LoggerFactory.getLogger(DataHandler.class.getCanonicalName());
 
+  /**
+   * Assignables list.
+   */
   private List<Assignable> assignables;
 
+  private DataHandler() {
+    // We don't provide empty constructor.
+  }
+
+  /**
+   * Builds a data handler passing assignables as argument.
+   *
+   * @param assignables
+   * @throws DataHandlerException
+   */
   public DataHandler(final List<Assignable> assignables) throws DataHandlerException {
     if(null == assignables || assignables.isEmpty()) {
       throw new DataHandlerException("It could not find a suitable assignable.");
@@ -27,7 +40,7 @@ public abstract class DataHandler {
 
   /**
    * Assigns data to only one assignable.
-   * @param uci
+   * @param uci unique connection identifier.
    * @param data
    * @throws DataHandlerException
    */
@@ -47,6 +60,19 @@ public abstract class DataHandler {
     LOGGER.info("Data handler can't find any suitable assignable. UCI:{}", uci);
   }
 
+  /**
+   * Retrieves the versionable from data.
+   * Tries to find a versionable of the data.
+   * If there's no suitable candidate, a data handler exceptions will be emitted.
+   *
+   * TODO: The {@code getVersionable} must understand how gets version if data is non-JSON parsable.
+   * TODO: In case of binary data, so header content, header size and checksum  metadata must be
+   * TODO: supplied.
+   *
+   * @param rawData
+   * @return
+   * @throws DataHandlerException
+   */
   public static Versionable getVersionable(final byte[] rawData) throws DataHandlerException {
     try {
       final Versionable versionable = new Gson().fromJson(new String(rawData), Versionable.class);
@@ -64,6 +90,14 @@ public abstract class DataHandler {
     }
   }
 
+  /**
+   * Compares version between string objects.
+   *
+   * @param obj
+   * @param other
+   * @return
+   * @throws DataHandlerException
+   */
   public static boolean compareVersion(final String obj, final String other) throws
       DataHandlerException {
     if(obj == null || other == null) {

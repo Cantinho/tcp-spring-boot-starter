@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ClientHandler implements Transmitter {
+public abstract class ClientHandler implements Transmitter {
 
   /**
    * A logger instance.

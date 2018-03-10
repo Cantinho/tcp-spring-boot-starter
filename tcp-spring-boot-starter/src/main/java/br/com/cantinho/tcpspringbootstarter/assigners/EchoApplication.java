@@ -46,6 +46,16 @@ public class EchoApplication extends Assignable {
     this.transmitter = transmitter;
   }
 
+  /**
+   * Retrieve assignable name.
+   *
+   * @return
+   */
+  @Override
+  public String getName() {
+    return EchoApplication.class.getCanonicalName();
+  }
+
   @Override
   public List<String> getVersions() {
     final List<String> versions = new ArrayList<>(converters.size());
