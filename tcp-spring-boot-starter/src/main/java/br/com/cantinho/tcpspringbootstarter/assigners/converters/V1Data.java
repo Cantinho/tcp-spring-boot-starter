@@ -1,6 +1,4 @@
-package br.com.cantinho.tcpspringbootstarter.converters;
-
-import java.util.Objects;
+package br.com.cantinho.tcpspringbootstarter.assigners.converters;
 
 public class V1Data extends Versionable {
 

@@ -1,4 +1,4 @@
-package br.com.cantinho.tcpspringbootstarter.converters;
+package br.com.cantinho.tcpspringbootstarter.assigners.converters;
 
 public abstract class Versionable {
 

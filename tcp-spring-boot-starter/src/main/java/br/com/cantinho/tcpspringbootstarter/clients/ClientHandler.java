@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ClientHandler {
+public class ClientHandler implements Transmitter {
 
   /**
    * A logger instance.
@@ -20,9 +20,10 @@ public class ClientHandler {
    */
   private Map<String, TcpConnection> clients = new HashMap<>();
 
-  public void onConnect(final TcpConnection tcpConnection) {
+  public String onConnect(final TcpConnection tcpConnection) {
     final String uci = ClientUtils.generateUCI(tcpConnection);
     clients.put(uci, tcpConnection);
+    return uci;
   }
 
   public void onDisconnect(final TcpConnection tcpConnection) {
@@ -30,6 +31,7 @@ public class ClientHandler {
     clients.remove(uci, tcpConnection);
   }
 
+  @Override
   public void send(final String uci, final Object... parameters) {
     final TcpConnection tcpConnection = clients.get(uci);
     if(null != tcpConnection) {

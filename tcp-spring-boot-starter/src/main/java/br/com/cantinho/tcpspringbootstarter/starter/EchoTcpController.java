@@ -1,11 +1,13 @@
 package br.com.cantinho.tcpspringbootstarter.starter;
 
 import br.com.cantinho.tcpspringbootstarter.clients.ClientHandler;
-import br.com.cantinho.tcpspringbootstarter.converters.DataHandler;
+import br.com.cantinho.tcpspringbootstarter.data.DataHandler;
+import br.com.cantinho.tcpspringbootstarter.data.DataHandlerException;
 import br.com.cantinho.tcpspringbootstarter.filters.FilterHandler;
 import br.com.cantinho.tcpspringbootstarter.tcp.TcpConnection;
 import br.com.cantinho.tcpspringbootstarter.tcp.TcpController;
 
+import br.com.cantinho.tcpspringbootstarter.utils.ClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,12 +19,33 @@ import org.springframework.beans.factory.annotation.Autowired;
 @TcpController
 public class EchoTcpController {
 
+  /**
+   * Logger.
+   */
   private static final Logger LOGGER = LoggerFactory.getLogger(EchoTcpController.class);
 
+  /**
+   * Handler to filter connections.
+   */
   final FilterHandler filterHandler;
+
+  /**
+   * Handler to manager client connections.
+   */
   final ClientHandler clientHandler;
+
+  /**
+   * Handler to process incoming data.
+   */
   final DataHandler dataHandler;
 
+  /**
+   * Build a Tcp Controller passing handlers as arguments.
+   *
+   * @param filterHandler
+   * @param clientHandler
+   * @param dataHandler
+   */
   @Autowired
   public EchoTcpController(
       final FilterHandler filterHandler,
@@ -36,24 +59,38 @@ public class EchoTcpController {
 
 
   /**
-   * Send the message received from client.
+   * Sends the message received from client.
    *
    * @param connection
    * @param data
    */
   public void receiveData(final TcpConnection connection, final byte[] data) {
-    final String answer = new String(data);
-    LOGGER.info("receiveData: " + answer);
-    connection.send(answer.getBytes());
+    final boolean passed = filterHandler.filter(connection, data);
+    if(passed) {
+      final String uci = ClientUtils.generateUCI(connection);
+      try {
+        dataHandler.onIncomingData(uci, data);
+      } catch (final DataHandlerException dhe) {
+        LOGGER.error("Fix data handler. {}", dhe);
+      }
+    }
+//    final String answer = new String(data);
+//    LOGGER.info("receiveData: " + answer);
+//    connection.send(answer.getBytes());
   }
 
   /**
-   * When receive a connection.
+   * When it receives a connection.
    *
    * @param connection
    */
   public void connect(final TcpConnection connection) {
-    clientHandler.onConnect(connection);
+    final boolean passed = filterHandler.filter(connection);
+    if(passed) {
+      final String uci = clientHandler.onConnect(connection);
+      // Something else to do.
+    }
+
   }
 
   /**
@@ -62,7 +99,11 @@ public class EchoTcpController {
    * @param connection
    */
   public void disconnect(final TcpConnection connection) {
-    clientHandler.onDisconnect(connection);
+    final boolean passed = filterHandler.filter(connection);
+    if(passed) {
+      clientHandler.onDisconnect(connection);
+      // Something else to do.
+    }
   }
 
 }

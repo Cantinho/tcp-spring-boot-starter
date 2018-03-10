@@ -1,4 +1,4 @@
-package br.com.cantinho.tcpspringbootstarter.converters;
+package br.com.cantinho.tcpspringbootstarter.data;
 
 public class DataHandlerException extends Exception {
 

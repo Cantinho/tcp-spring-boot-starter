@@ -1,4 +1,4 @@
-package br.com.cantinho.tcpspringbootstarter.converters;
+package br.com.cantinho.tcpspringbootstarter.assigners.converters;
 
 import com.google.gson.Gson;
 
