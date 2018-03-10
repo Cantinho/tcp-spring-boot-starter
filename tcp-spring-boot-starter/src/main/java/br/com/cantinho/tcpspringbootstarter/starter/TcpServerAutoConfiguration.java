@@ -91,27 +91,27 @@ public class TcpServerAutoConfiguration {
     return new BasicClientHandler();
   }
 
-  @Bean
-  @Scope("singleton")
-  AssignableHandler assignableHandler() throws AssignableHandlerException, AssignableException {
-    LOGGER.info("assignableHandler: " + BasicAssignableHandler.class.getCanonicalName());
-
-    final List<IConverter> converters = new ArrayList<>(){{
-      add(new V1DataConverter());
-      add(new V2DataConverter());
-    }};
-
-    final List<Assignable> assignables = new ArrayList<>(){{
-      new EchoApplication(converters, clientHandler());
-    }};
-
-    return new BasicAssignableHandler(assignables);
-  }
 
   @Bean
   DataHandler dataHandler() throws DataHandlerException, AssignableHandlerException, AssignableException {
     LOGGER.info("dataHandler: " + BasicDataHandler.class.getCanonicalName());
-    return new BasicDataHandler(assignableHandler().getAssignables());
+
+    final List<IConverter> converters = new ArrayList<>();
+    converters.add(new V1DataConverter());
+    converters.add(new V2DataConverter());
+
+    if(converters.isEmpty()) {
+      throw new RuntimeException("Converters doesn't exist.");
+    }
+
+    final List<Assignable> assignables = new ArrayList<>();
+    assignables.add(new EchoApplication(converters, clientHandler()));
+
+    if(assignables.isEmpty()) {
+      throw new RuntimeException("EchoApplication doesn't exist.");
+    }
+    LOGGER.info("dataHandler::assignables: " + assignables);
+    return new BasicDataHandler(assignables);
   }
 
 }
