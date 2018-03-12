@@ -2,6 +2,8 @@ package br.com.cantinho.tcpspringbootstarter.assigners.converters;
 
 public class V2Data extends Versionable {
 
+  protected static final String VERSION = V2Data.class.getSimpleName();
+
   private String src;
 
   private String dest;
@@ -11,7 +13,7 @@ public class V2Data extends Versionable {
   public V2Data(){}
 
   public V2Data(final String src, final String dest, final String data) {
-    super(V2Data.class.getCanonicalName());
+    super(VERSION);
     this.src = src;
     this.dest = dest;
     this.data = data;
@@ -19,7 +21,7 @@ public class V2Data extends Versionable {
 
   @Override
   public String getVer() {
-    return V2Data.class.getCanonicalName();
+    return VERSION;
   }
 
   public String getSrc() {

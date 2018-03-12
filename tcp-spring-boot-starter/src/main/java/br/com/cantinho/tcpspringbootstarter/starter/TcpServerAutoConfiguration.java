@@ -93,7 +93,7 @@ public class TcpServerAutoConfiguration {
 
 
   @Bean
-  DataHandler dataHandler() throws DataHandlerException, AssignableHandlerException, AssignableException {
+  DataHandler dataHandler() throws DataHandlerException, AssignableException {
     LOGGER.info("dataHandler: " + BasicDataHandler.class.getCanonicalName());
 
     final List<IConverter> converters = new ArrayList<>();

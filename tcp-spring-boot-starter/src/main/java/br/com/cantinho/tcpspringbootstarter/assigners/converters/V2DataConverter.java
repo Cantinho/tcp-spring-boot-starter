@@ -6,7 +6,7 @@ public class V2DataConverter extends IConverter {
 
   @Override
   public String version() {
-    return V2Data.class.getCanonicalName();
+    return V2Data.VERSION;
   }
 
   @Override

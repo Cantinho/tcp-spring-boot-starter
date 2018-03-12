@@ -90,14 +90,12 @@ public class EchoApplication extends Assignable {
     //Object to JSON in String
     try {
       final String jsonInString = mapper.writeValueAsString(data);
-      System.out.println("json:"+jsonInString);
+      // System.out.println("json:"+jsonInString);
       // Transmitting the message back to client.
       transmitter.send(uci, jsonInString.getBytes());
     } catch (JsonProcessingException e) {
       e.printStackTrace();
     }
-    //TODO transmitter.send();
-
   }
 
   @Override
