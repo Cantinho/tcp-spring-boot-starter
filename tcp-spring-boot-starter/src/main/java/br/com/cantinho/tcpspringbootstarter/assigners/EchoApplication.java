@@ -1,5 +1,7 @@
 package br.com.cantinho.tcpspringbootstarter.assigners;
 
+import br.com.cantinho.tcpspringbootstarter.assigners.converters.EchoData;
+import br.com.cantinho.tcpspringbootstarter.assigners.converters.EchoDataConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.IConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.V1Data;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.Versionable;
@@ -7,6 +9,7 @@ import br.com.cantinho.tcpspringbootstarter.clients.Transmitter;
 import br.com.cantinho.tcpspringbootstarter.data.DataHandlerException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,11 +92,21 @@ public class EchoApplication extends Assignable {
     final ObjectMapper mapper = new ObjectMapper();
     //Object to JSON in String
     try {
-      final String jsonInString = mapper.writeValueAsString(data);
-      // System.out.println("json:"+jsonInString);
+
+      final EchoData request = EchoDataConverter.jsonize(data);
+
+      final EchoData response = new EchoData();
+      response.setSource(request.getDestination());
+      response.setDestination(request.getSource());
+      response.setPayload(request.getPayload());
+
+      Object objectData = EchoDataConverter.dejsonizeFrom(clazz, response);
+
+      final String jsonInString = mapper.writeValueAsString(objectData);
+
       // Transmitting the message back to client.
       transmitter.send(uci, jsonInString.getBytes());
-    } catch (JsonProcessingException e) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }

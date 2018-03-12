@@ -36,6 +36,18 @@ public class V1Data extends Versionable {
     return payload;
   }
 
+  public void setSource(String source) {
+    this.source = source;
+  }
+
+  public void setDestination(String destination) {
+    this.destination = destination;
+  }
+
+  public void setPayload(String payload) {
+    this.payload = payload;
+  }
+
   @Override
   public String toString() {
     return "V1Data{" +

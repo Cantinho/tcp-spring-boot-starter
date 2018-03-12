@@ -52,7 +52,7 @@ public abstract class DataHandler {
         final boolean equals = compareVersion(versionable.getVer(), version);
         if(equals) {
           final Object message = assignable.parse(data);
-          assignable.assign(uci, message);
+          assignable.assign(uci, message, versionable.getClass().getSimpleName());
           return;
         }
       }

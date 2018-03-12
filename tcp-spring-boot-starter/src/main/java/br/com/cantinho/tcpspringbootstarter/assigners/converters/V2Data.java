@@ -36,6 +36,18 @@ public class V2Data extends Versionable {
     return data;
   }
 
+  public void setSrc(String src) {
+    this.src = src;
+  }
+
+  public void setDest(String dest) {
+    this.dest = dest;
+  }
+
+  public void setData(String data) {
+    this.data = data;
+  }
+
   @Override
   public String toString() {
     return "V1Data{" +
