@@ -2,6 +2,7 @@ package br.com.cantinho.tcpspringbootstarter.starter;
 
 import br.com.cantinho.tcpspringbootstarter.assigners.*;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.IConverter;
+import br.com.cantinho.tcpspringbootstarter.assigners.converters.RoomV1DataConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.V1DataConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.V2DataConverter;
 import br.com.cantinho.tcpspringbootstarter.clients.BasicClientHandler;
@@ -95,19 +96,27 @@ public class TcpServerAutoConfiguration {
   DataHandler dataHandler() throws DataHandlerException, AssignableException {
     LOGGER.info("dataHandler: " + BasicDataHandler.class.getCanonicalName());
 
-    final List<IConverter> converters = new ArrayList<>();
-    converters.add(new V1DataConverter());
-    converters.add(new V2DataConverter());
+    final List<IConverter> echoConverters = new ArrayList<>();
+    echoConverters.add(new V1DataConverter());
+    echoConverters.add(new V2DataConverter());
 
-    if(converters.isEmpty()) {
+    if(echoConverters.isEmpty()) {
+      throw new RuntimeException("Converters doesn't exist.");
+    }
+
+    final List<IConverter> roomConverters = new ArrayList<>();
+    roomConverters.add(new RoomV1DataConverter());
+
+    if(echoConverters.isEmpty()) {
       throw new RuntimeException("Converters doesn't exist.");
     }
 
     final List<Assignable> assignables = new ArrayList<>();
-    assignables.add(new EchoAssignable(converters, clientHandler()));
+    assignables.add(new EchoAssignable(echoConverters, clientHandler()));
+    assignables.add(new RoomAssignable(roomConverters, clientHandler()));
 
     if(assignables.isEmpty()) {
-      throw new RuntimeException("EchoAssignable doesn't exist.");
+      throw new RuntimeException("Assignable doesn't exist.");
     }
     LOGGER.info("dataHandler::assignables: " + assignables);
     return new BasicDataHandler(assignables);
