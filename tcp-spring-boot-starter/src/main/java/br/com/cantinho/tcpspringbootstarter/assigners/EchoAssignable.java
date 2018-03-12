@@ -1,5 +1,7 @@
 package br.com.cantinho.tcpspringbootstarter.assigners;
 
+import br.com.cantinho.tcpspringbootstarter.applications.Application;
+import br.com.cantinho.tcpspringbootstarter.applications.EchoApplication;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.EchoData;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.EchoDataConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.IConverter;
@@ -19,7 +21,9 @@ import static br.com.cantinho.tcpspringbootstarter.data.DataHandler.getVersionab
 /**
  * Echos message to client.
  */
-public class EchoApplication extends Assignable {
+public class EchoAssignable extends Assignable {
+
+  private Application application = new EchoApplication();
 
   /**
    * Clients.
@@ -37,7 +41,7 @@ public class EchoApplication extends Assignable {
    * @param converters
    * @throws AssignableException
    */
-  public EchoApplication(final List<IConverter> converters, final Transmitter transmitter) throws
+  public EchoAssignable(final List<IConverter> converters, final Transmitter transmitter) throws
       AssignableException {
     if(null == converters || converters.isEmpty()) {
       throw new AssignableException("It could not find a suitable converter.");
@@ -56,7 +60,7 @@ public class EchoApplication extends Assignable {
    */
   @Override
   public String getName() {
-    return EchoApplication.class.getCanonicalName();
+    return EchoAssignable.class.getCanonicalName();
   }
 
   @Override
@@ -95,10 +99,7 @@ public class EchoApplication extends Assignable {
 
       final EchoData request = EchoDataConverter.jsonize(data);
 
-      final EchoData response = new EchoData();
-      response.setSource(request.getDestination());
-      response.setDestination(request.getSource());
-      response.setPayload(request.getPayload());
+      EchoData response = (EchoData) application.process(request);
 
       Object objectData = EchoDataConverter.dejsonizeFrom(clazz, response);
 

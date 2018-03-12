@@ -3,7 +3,6 @@ package br.com.cantinho.tcpspringbootstarter.starter;
 import br.com.cantinho.tcpspringbootstarter.assigners.*;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.IConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.V1DataConverter;
-import br.com.cantinho.tcpspringbootstarter.assigners.converters.V2Data;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.V2DataConverter;
 import br.com.cantinho.tcpspringbootstarter.clients.BasicClientHandler;
 import br.com.cantinho.tcpspringbootstarter.clients.ClientHandler;
@@ -105,10 +104,10 @@ public class TcpServerAutoConfiguration {
     }
 
     final List<Assignable> assignables = new ArrayList<>();
-    assignables.add(new EchoApplication(converters, clientHandler()));
+    assignables.add(new EchoAssignable(converters, clientHandler()));
 
     if(assignables.isEmpty()) {
-      throw new RuntimeException("EchoApplication doesn't exist.");
+      throw new RuntimeException("EchoAssignable doesn't exist.");
     }
     LOGGER.info("dataHandler::assignables: " + assignables);
     return new BasicDataHandler(assignables);
