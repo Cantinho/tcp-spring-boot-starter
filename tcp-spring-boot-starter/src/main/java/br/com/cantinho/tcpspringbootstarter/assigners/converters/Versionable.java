@@ -1,6 +1,6 @@
 package br.com.cantinho.tcpspringbootstarter.assigners.converters;
 
-public abstract class Versionable {
+public class Versionable {
 
   private String ver;
 
