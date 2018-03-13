@@ -1,8 +1,8 @@
-package br.com.cantinho.tcpspringbootstarter.converters;
-
-import java.util.Objects;
+package br.com.cantinho.tcpspringbootstarter.assigners.converters;
 
 public class V1Data extends Versionable {
+
+  protected static final String VERSION = V1Data.class.getSimpleName();
 
   private String source;
 
@@ -13,7 +13,7 @@ public class V1Data extends Versionable {
   public V1Data(){}
 
   public V1Data(final String source, final String destination, final String payload) {
-    super(V1Data.class.getCanonicalName());
+    super(VERSION);
     this.source = source;
     this.destination = destination;
     this.payload = payload;
@@ -21,7 +21,7 @@ public class V1Data extends Versionable {
 
   @Override
   public String getVer() {
-    return V1Data.class.getCanonicalName();
+    return VERSION;
   }
 
   public String getSource() {
@@ -34,6 +34,18 @@ public class V1Data extends Versionable {
 
   public String getPayload() {
     return payload;
+  }
+
+  public void setSource(String source) {
+    this.source = source;
+  }
+
+  public void setDestination(String destination) {
+    this.destination = destination;
+  }
+
+  public void setPayload(String payload) {
+    this.payload = payload;
   }
 
   @Override

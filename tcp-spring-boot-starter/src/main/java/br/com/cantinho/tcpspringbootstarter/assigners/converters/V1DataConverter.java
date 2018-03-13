@@ -1,4 +1,4 @@
-package br.com.cantinho.tcpspringbootstarter.converters;
+package br.com.cantinho.tcpspringbootstarter.assigners.converters;
 
 import com.google.gson.Gson;
 
@@ -6,7 +6,7 @@ public class V1DataConverter extends IConverter {
 
   @Override
   public String version() {
-    return V1Data.class.getCanonicalName();
+    return V1Data.VERSION;
   }
 
   @Override
