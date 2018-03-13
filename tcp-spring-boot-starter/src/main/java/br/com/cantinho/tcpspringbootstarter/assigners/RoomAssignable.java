@@ -1,19 +1,13 @@
 package br.com.cantinho.tcpspringbootstarter.assigners;
 
 import br.com.cantinho.tcpspringbootstarter.applications.Application;
-import br.com.cantinho.tcpspringbootstarter.applications.EchoApplication;
-import br.com.cantinho.tcpspringbootstarter.applications.RoomApplication;
-import br.com.cantinho.tcpspringbootstarter.assigners.converters.EchoData;
-import br.com.cantinho.tcpspringbootstarter.assigners.converters.EchoDataConverter;
-import br.com.cantinho.tcpspringbootstarter.assigners.converters.IConverter;
-import br.com.cantinho.tcpspringbootstarter.assigners.converters.RoomData;
-import br.com.cantinho.tcpspringbootstarter.assigners.converters.RoomDataConverter;
-import br.com.cantinho.tcpspringbootstarter.assigners.converters.V1Data;
-import br.com.cantinho.tcpspringbootstarter.assigners.converters.Versionable;
+import br.com.cantinho.tcpspringbootstarter.assigners.converters.*;
 import br.com.cantinho.tcpspringbootstarter.clients.Transmitter;
 import br.com.cantinho.tcpspringbootstarter.data.DataHandlerException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,12 +20,10 @@ import static br.com.cantinho.tcpspringbootstarter.data.DataHandler.getVersionab
  */
 public class RoomAssignable extends Assignable {
 
-  private Application application = new RoomApplication();
-
   /**
-   * Clients.
+   * A logger instance.
    */
-  private Transmitter transmitter;
+  private static final Logger LOGGER = LoggerFactory.getLogger(RoomAssignable.class.getCanonicalName());
 
   /**
    * Converters.
@@ -44,16 +36,14 @@ public class RoomAssignable extends Assignable {
    * @param converters
    * @throws AssignableException
    */
-  public RoomAssignable(final List<IConverter> converters, final Transmitter transmitter) throws
+  public RoomAssignable(final List<IConverter> converters, final Transmitter transmitter, final
+  Application application) throws
       AssignableException {
+    super(transmitter, application);
     if(null == converters || converters.isEmpty()) {
       throw new AssignableException("It could not find a suitable converter.");
     }
-    if(null == transmitter) {
-      throw new AssignableException("It could not find a suitable transmitter.");
-    }
     this.converters = converters;
-    this.transmitter = transmitter;
   }
 
   /**
@@ -88,7 +78,14 @@ public class RoomAssignable extends Assignable {
   }
 
   @Override
+  public void onDisconnect(final String uci) {
+    super.onDisconnect(uci);
+    application.onDisconnect(uci);
+  }
+
+  @Override
   public void assign(Object... parameters) {
+    super.assign(parameters);
     if(null == parameters || parameters.length < 2) {
       throw new IllegalStateException("Unable to assign data. Fix this before production.");
     }
@@ -101,17 +98,18 @@ public class RoomAssignable extends Assignable {
     try {
 
       final RoomData request = RoomDataConverter.jsonize(data);
-
       final RoomData response = (RoomData) application.process(request);
-
       final Object objectData = RoomDataConverter.dejsonizeFrom(clazz, response);
-
       final String jsonInString = mapper.writeValueAsString(objectData);
 
       // Transmitting the message back to client.
-      transmitter.send(uci, jsonInString.getBytes());
+      try {
+        send(uci, jsonInString.getBytes());
+      } catch (AssignableException e) {
+        LOGGER.debug("Content not sent. Message: {}", e.getMessage());
+      }
     } catch (Exception e) {
-      e.printStackTrace();
+      LOGGER.error("Couldn't assign. Message: {}", e.getMessage());
     }
   }
 

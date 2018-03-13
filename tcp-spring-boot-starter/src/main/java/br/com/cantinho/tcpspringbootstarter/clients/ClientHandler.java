@@ -28,10 +28,11 @@ public abstract class ClientHandler implements Transmitter {
     return uci;
   }
 
-  public void onDisconnect(final TcpConnection tcpConnection) {
+  public String onDisconnect(final TcpConnection tcpConnection) {
     final String uci = ClientUtils.generateUCI(tcpConnection);
-    LOGGER.info("onDisconnect {}", uci);
     clients.remove(uci, tcpConnection);
+    LOGGER.info("onDisconnect {}", uci);
+    return uci;
   }
 
   @Override

@@ -19,6 +19,28 @@ public class BasicDataHandler extends DataHandler {
   }
 
   /**
+   * Assigns connection to everyone.
+   *
+   * @param uci unique connection event identifier.
+   * @throws DataHandlerException
+   */
+  public void onConnect(final String uci) throws
+      DataHandlerException {
+    super.onConnect(uci);
+  }
+
+  /**
+   * Assigns disconnection event to everyone.
+   *
+   * @param uci unique connection identifier.
+   * @throws DataHandlerException
+   */
+  public void onDisconnect(final String uci) throws
+      DataHandlerException {
+    super.onDisconnect(uci);
+  }
+
+  /**
    * Assigns data to only one assignable.
    *
    * @param uci unique connection identifier.

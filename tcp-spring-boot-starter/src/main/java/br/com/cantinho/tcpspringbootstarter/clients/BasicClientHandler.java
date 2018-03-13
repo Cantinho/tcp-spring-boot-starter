@@ -10,8 +10,8 @@ public class BasicClientHandler extends ClientHandler implements Transmitter {
   }
 
   @Override
-  public void onDisconnect(final TcpConnection tcpConnection) {
-    super.onDisconnect(tcpConnection);
+  public String onDisconnect(final TcpConnection tcpConnection) {
+    return super.onDisconnect(tcpConnection);
   }
 
   @Override

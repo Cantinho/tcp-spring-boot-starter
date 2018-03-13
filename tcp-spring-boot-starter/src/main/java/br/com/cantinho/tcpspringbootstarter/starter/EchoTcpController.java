@@ -90,7 +90,7 @@ public class EchoTcpController {
     final boolean passed = filterHandler.filter(connection);
     if(passed) {
       final String uci = clientHandler.onConnect(connection);
-      // Something else to do.
+      dataHandler.onConnect(uci);
     }
 
   }
@@ -104,8 +104,8 @@ public class EchoTcpController {
   public void disconnect(final TcpConnection connection) {
     final boolean passed = filterHandler.filter(connection);
     if(passed) {
-      clientHandler.onDisconnect(connection);
-      // Something else to do.
+      final String uci = clientHandler.onDisconnect(connection);
+      dataHandler.onDisconnect(uci);
     }
   }
 

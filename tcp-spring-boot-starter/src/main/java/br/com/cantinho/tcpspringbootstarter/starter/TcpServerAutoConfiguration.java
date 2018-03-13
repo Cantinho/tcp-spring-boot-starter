@@ -1,5 +1,7 @@
 package br.com.cantinho.tcpspringbootstarter.starter;
 
+import br.com.cantinho.tcpspringbootstarter.applications.EchoApplication;
+import br.com.cantinho.tcpspringbootstarter.applications.RoomApplication;
 import br.com.cantinho.tcpspringbootstarter.assigners.*;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.IConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.RoomV1DataConverter;
@@ -108,8 +110,8 @@ public class TcpServerAutoConfiguration {
     }
 
     final List<Assignable> assignables = new ArrayList<>();
-    assignables.add(new EchoAssignable(echoConverters, clientHandler()));
-    assignables.add(new RoomAssignable(roomConverters, clientHandler()));
+    assignables.add(new EchoAssignable(echoConverters, clientHandler(), new EchoApplication()));
+    assignables.add(new RoomAssignable(roomConverters, clientHandler(), new RoomApplication()));
 
     if(assignables.isEmpty()) {
       throw new RuntimeException("Assignable doesn't exist.");

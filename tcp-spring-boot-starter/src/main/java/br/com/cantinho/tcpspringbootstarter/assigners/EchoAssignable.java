@@ -11,24 +11,23 @@ import br.com.cantinho.tcpspringbootstarter.clients.Transmitter;
 import br.com.cantinho.tcpspringbootstarter.data.DataHandlerException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static br.com.cantinho.tcpspringbootstarter.data.DataHandler.compareVersion;
-import static br.com.cantinho.tcpspringbootstarter.data.DataHandler.getVersionable;
+import static br.com.cantinho.tcpspringbootstarter.data.DataHandler.*;
 
 /**
  * Echos message to client.
  */
 public class EchoAssignable extends Assignable {
 
-  private Application application = new EchoApplication();
-
   /**
-   * Clients.
+   * A logger instance.
    */
-  private Transmitter transmitter;
+  private static final Logger LOGGER = LoggerFactory.getLogger(EchoAssignable.class.getCanonicalName());
 
   /**
    * Converters.
@@ -36,21 +35,22 @@ public class EchoAssignable extends Assignable {
   private List<IConverter> converters;
 
   /**
-   * Builds an echo application passing a converter list as argument.
+   * Builds an echo application passing a converter list, a transmitter and an application as
+   * arguments.
    *
    * @param converters
+   * @param transmitter
+   * @param application
    * @throws AssignableException
    */
-  public EchoAssignable(final List<IConverter> converters, final Transmitter transmitter) throws
+  public EchoAssignable(final List<IConverter> converters, final Transmitter transmitter, final
+                        Application application) throws
       AssignableException {
+    super(transmitter, application);
     if(null == converters || converters.isEmpty()) {
       throw new AssignableException("It could not find a suitable converter.");
     }
-    if(null == transmitter) {
-      throw new AssignableException("It could not find a suitable transmitter.");
-    }
     this.converters = converters;
-    this.transmitter = transmitter;
   }
 
   /**
@@ -85,7 +85,14 @@ public class EchoAssignable extends Assignable {
   }
 
   @Override
+  public void onDisconnect(final String uci) {
+    super.onDisconnect(uci);
+    application.onDisconnect(uci);
+  }
+
+  @Override
   public void assign(Object... parameters) {
+    super.assign(parameters);
     if(null == parameters || parameters.length < 2) {
       throw new IllegalStateException("Unable to assign data. Fix this before production.");
     }
@@ -98,17 +105,18 @@ public class EchoAssignable extends Assignable {
     try {
 
       final EchoData request = EchoDataConverter.jsonize(data);
-
-      EchoData response = (EchoData) application.process(request);
-
-      Object objectData = EchoDataConverter.dejsonizeFrom(clazz, response);
-
+      final EchoData response = (EchoData) application.process(request);
+      final Object objectData = EchoDataConverter.dejsonizeFrom(clazz, response);
       final String jsonInString = mapper.writeValueAsString(objectData);
 
       // Transmitting the message back to client.
-      transmitter.send(uci, jsonInString.getBytes());
+      try {
+        send(uci, jsonInString.getBytes());
+      } catch (AssignableException e) {
+        LOGGER.debug("Content not sent. Message: {}", e.getMessage());
+      }
     } catch (Exception e) {
-      e.printStackTrace();
+      LOGGER.error("Couldn't assign. Message: {}", e.getMessage());
     }
   }
 

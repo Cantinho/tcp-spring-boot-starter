@@ -13,7 +13,22 @@ public abstract class DataHandler {
   /**
    * A logger instance.
    */
-  private final static Logger LOGGER = LoggerFactory.getLogger(DataHandler.class.getCanonicalName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(DataHandler.class.getCanonicalName());
+
+  /**
+   * Connect event.
+   */
+  public static final int CONNECT = 1;
+
+  /**
+   * Disconnect event.
+   */
+  public static final int DISCONNECT = 2;
+
+  /**
+   * Incoming data event.
+   */
+  public static final int DATA = 3;
 
   /**
    * Assignables list.
@@ -37,15 +52,41 @@ public abstract class DataHandler {
     this.assignables = assignables;
   }
 
+  /**
+   * Broadcasts connect event for all assignables.
+   *
+   * @param parameters uci
+   */
+  public void onConnect(final Object... parameters) {
+    final String uci = (String) parameters[0];
+    for(final Assignable assignable : assignables) {
+      assignable.onConnect(uci);
+    }
+  }
+
+  /**
+   * Broadcasts disconnect event for all assignables.
+   *
+   * @param parameters uci
+   */
+  public void onDisconnect(final Object... parameters) {
+    final String uci = (String) parameters[0];
+    for(final Assignable assignable : assignables) {
+      assignable.onDisconnect(uci);
+    }
+  }
 
   /**
    * Assigns data to only one assignable.
-   * @param uci unique connection identifier.
-   * @param data
+   *
+   * @param parameters unique connection identifier.
+   * @param parameters optional
    * @throws DataHandlerException
    */
-  public void onIncomingData(final String uci, final byte[] data) throws
-      DataHandlerException {
+  public void onIncomingData(final Object... parameters) throws DataHandlerException {
+    final String uci = (String) parameters[0];
+    final byte[] data = (byte[]) parameters[1];
+
     final Versionable versionable = getVersionable(data);
     for(final Assignable assignable : assignables) {
       for(final String version : assignable.getVersions()) {
@@ -59,6 +100,8 @@ public abstract class DataHandler {
     }
     LOGGER.info("Data handler can't find any suitable assignable. UCI:{}", uci);
   }
+
+
 
   /**
    * Retrieves the versionable from data.
