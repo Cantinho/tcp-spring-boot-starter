@@ -102,9 +102,9 @@ public class RoomAssignable extends Assignable {
 
       final RoomData request = RoomDataConverter.jsonize(data);
 
-      RoomData response = (RoomData) application.process(request);
+      final RoomData response = (RoomData) application.process(request);
 
-      Object objectData = RoomDataConverter.dejsonizeFrom(clazz, response);
+      final Object objectData = RoomDataConverter.dejsonizeFrom(clazz, response);
 
       final String jsonInString = mapper.writeValueAsString(objectData);
 

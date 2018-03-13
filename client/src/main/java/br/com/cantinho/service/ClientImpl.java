@@ -1,7 +1,9 @@
 package br.com.cantinho.service;
 
+import br.com.cantinho.domain.RoomV1Data;
 import br.com.cantinho.domain.SimpleMessage;
 import br.com.cantinho.utils.Utils;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -96,10 +98,13 @@ public class ClientImpl implements Client {
       sslSocket.startHandshake();
 
       while(true) {
-        final String line = new Scanner(System.in).nextLine();
-        SimpleMessage messageMapper = Utils.createMessage(sslSocket, line);
+        final String client = sslSocket.getLocalAddress().getHostName() + ":" + sslSocket.getLocalPort();
+        System.out.print("[client] room to connect: ");
+        final String room = new Scanner(System.in).nextLine();
+        System.out.print("[client] message to send: ");
+        final String message = new Scanner(System.in).nextLine();
 
-        outputStream.write(Utils.getBytesFromMessage(messageMapper));
+        outputStream.write(new Gson().toJson(new RoomV1Data(client, room, message)).getBytes());
         outputStream.flush();
 
         final byte[] buffer = new byte[BUFFER_SIZE];
@@ -109,8 +114,7 @@ public class ClientImpl implements Client {
           break;
         }
         final byte[] response = Arrays.copyOfRange(buffer, 0, size);
-        SimpleMessage responseMapper = Utils.getMessageFromBytes(response);
-        LOGGER.info("[client]: {}", responseMapper);
+        LOGGER.info("[client]: {}", new String(response));
       }
     } catch (Exception exc) {
       LOGGER.error("[error]: {}", exc.getMessage());

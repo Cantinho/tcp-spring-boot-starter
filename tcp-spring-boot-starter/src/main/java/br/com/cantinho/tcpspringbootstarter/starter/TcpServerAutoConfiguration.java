@@ -100,14 +100,10 @@ public class TcpServerAutoConfiguration {
     echoConverters.add(new V1DataConverter());
     echoConverters.add(new V2DataConverter());
 
-    if(echoConverters.isEmpty()) {
-      throw new RuntimeException("Converters doesn't exist.");
-    }
-
     final List<IConverter> roomConverters = new ArrayList<>();
     roomConverters.add(new RoomV1DataConverter());
 
-    if(echoConverters.isEmpty()) {
+    if(echoConverters.isEmpty() && roomConverters.isEmpty()) {
       throw new RuntimeException("Converters doesn't exist.");
     }
 
