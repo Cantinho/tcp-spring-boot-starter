@@ -24,6 +24,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.Scanner;
 
 @Component
@@ -90,32 +91,49 @@ public class ClientImpl implements Client {
    * Listens for user inputs to send to a server in a secure socket communication.
    */
   private void runSecureCommunication(){
-    try (
-        final SSLSocket sslSocket = getSSLSocket();
-        final OutputStream outputStream = sslSocket.getOutputStream();
-        final InputStream inputStream = sslSocket.getInputStream()
-    ) {
+    try {
+      final SSLSocket sslSocket = getSSLSocket();
+      final OutputStream outputStream = sslSocket.getOutputStream();
+      final InputStream inputStream = sslSocket.getInputStream();
       sslSocket.startHandshake();
 
-      while(true) {
-        final String client = sslSocket.getLocalAddress().getHostName() + ":" + sslSocket.getLocalPort();
-        System.out.print("[client] room to connect: ");
-        final String room = new Scanner(System.in).nextLine();
-        System.out.print("[client] message to send: ");
-        final String message = new Scanner(System.in).nextLine();
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          final String client = "client " + new Random().nextInt();
+          //sslSocket.getLocalAddress().getHostName() + ":" + sslSocket.getLocalPort();
+          while (true == true) {
+            try {
+              System.out.print("[client] room to connect: ");
+              final String room = new Scanner(System.in).nextLine();
+              System.out.print("[client] message to send: ");
+              final String message = new Scanner(System.in).nextLine();
 
-        outputStream.write(new Gson().toJson(new RoomV1Data(client, room, message)).getBytes());
-        outputStream.flush();
-
-        final byte[] buffer = new byte[BUFFER_SIZE];
-        final int size = inputStream.read(buffer);
-        if (size < 0) {
-          LOGGER.warn("[client]: no bytes to read");
-          break;
+              outputStream.write(new Gson().toJson(new RoomV1Data(client, room, message)).getBytes());
+              outputStream.flush();
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          }
         }
-        final byte[] response = Arrays.copyOfRange(buffer, 0, size);
-        LOGGER.info("[client]: {}", new String(response));
-      }
+      }).start();
+
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          final byte[] buffer = new byte[BUFFER_SIZE];
+          int size = 0;
+          try{
+            while ((size = inputStream.read(buffer)) >= 0) {
+              final byte[] response = Arrays.copyOfRange(buffer, 0, size);
+              LOGGER.info("[client]: {}", new String(response));
+            }
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+        }
+      }).start();
+
     } catch (Exception exc) {
       LOGGER.error("[error]: {}", exc.getMessage());
     }

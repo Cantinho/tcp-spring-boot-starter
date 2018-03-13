@@ -6,6 +6,15 @@ public class RoomData {
   private String to;
   private String msg;
 
+  public RoomData() {
+  }
+
+  public RoomData(String from, String to, String msg) {
+    this.from = from;
+    this.to = to;
+    this.msg = msg;
+  }
+
   public String getFrom() {
     return from;
   }

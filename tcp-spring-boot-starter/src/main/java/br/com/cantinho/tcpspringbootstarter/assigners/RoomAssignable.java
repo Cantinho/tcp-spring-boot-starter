@@ -1,6 +1,7 @@
 package br.com.cantinho.tcpspringbootstarter.assigners;
 
 import br.com.cantinho.tcpspringbootstarter.applications.Application;
+import br.com.cantinho.tcpspringbootstarter.applications.RoomApplication;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.*;
 import br.com.cantinho.tcpspringbootstarter.clients.Transmitter;
 import br.com.cantinho.tcpspringbootstarter.data.DataHandlerException;
@@ -98,16 +99,27 @@ public class RoomAssignable extends Assignable {
     try {
 
       final RoomData request = RoomDataConverter.jsonize(data);
-      final RoomData response = (RoomData) application.process(request);
-      final Object objectData = RoomDataConverter.dejsonizeFrom(clazz, response);
-      final String jsonInString = mapper.writeValueAsString(objectData);
+      final List<RoomApplication.Bag> bags = (List<RoomApplication.Bag>) application.process(uci, request);
+      for(final RoomApplication.Bag bag : bags) {
+        final Object objectData = RoomDataConverter.dejsonizeFrom(clazz, bag.getRoomData());
+        final String jsonInString = mapper.writeValueAsString(objectData);
+        try {
+          send(bag.getUci(), jsonInString.getBytes());
+        } catch (AssignableException e) {
+          LOGGER.debug("Content not sent. Message: {}", e.getMessage());
+        }
+      }
+
+      //final RoomData response = (List<RoomApplication.Bag>) application.process(uci, request);
+      //final Object objectData = RoomDataConverter.dejsonizeFrom(clazz, response);
+      //final String jsonInString = mapper.writeValueAsString(objectData);
 
       // Transmitting the message back to client.
-      try {
-        send(uci, jsonInString.getBytes());
-      } catch (AssignableException e) {
-        LOGGER.debug("Content not sent. Message: {}", e.getMessage());
-      }
+      //try {
+      //  send(uci, jsonInString.getBytes());
+      //} catch (AssignableException e) {
+      //  LOGGER.debug("Content not sent. Message: {}", e.getMessage());
+      //}
     } catch (Exception e) {
       LOGGER.error("Couldn't assign. Message: {}", e.getMessage());
     }

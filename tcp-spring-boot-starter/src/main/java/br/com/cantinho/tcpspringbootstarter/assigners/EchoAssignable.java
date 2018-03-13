@@ -105,7 +105,7 @@ public class EchoAssignable extends Assignable {
     try {
 
       final EchoData request = EchoDataConverter.jsonize(data);
-      final EchoData response = (EchoData) application.process(request);
+      final EchoData response = (EchoData) application.process(uci, request);
       final Object objectData = EchoDataConverter.dejsonizeFrom(clazz, response);
       final String jsonInString = mapper.writeValueAsString(objectData);
 
