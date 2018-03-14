@@ -103,26 +103,31 @@ public class ClientImpl implements Client {
       new Thread(new Runnable() {
         @Override
         public void run() {
-          final String client = "client " + new Random().nextInt();
-          //sslSocket.getLocalAddress().getHostName() + ":" + sslSocket.getLocalPort();
+          System.out.print("[client] client name: ");
+          final String client = new Scanner(System.in).nextLine();
           while (true == true) {
             try {
               System.out.print("[client] data version (v1, v2): ");
               final String data = new Scanner(System.in).nextLine();
+              System.out.print("[client] send message to: ");
+              final String to = new Scanner(System.in).nextLine();
               System.out.print("[client] message to send: ");
               final String message = new Scanner(System.in).nextLine();
 
               Object obj = null;
               switch (data) {
                 case "v1":
-                  obj = new RoomV1Data(client, "broadcast", message);
+                  obj = new RoomV1Data(client, to, message);
                   break;
                 case "v2":
-                  obj = new RoomV2Data(client, "broadcast", message);
+                  obj = new RoomV2Data(client, to, message);
                   break;
               }
 
-              outputStream.write(new Gson().toJson(obj).getBytes());
+              String str = new Gson().toJson(obj);
+              //LOGGER.info("message being sent: " + str);
+
+              outputStream.write(str.getBytes());
               outputStream.flush();
             } catch (IOException e) {
               e.printStackTrace();

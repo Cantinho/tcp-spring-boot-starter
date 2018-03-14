@@ -55,7 +55,7 @@ public class TcpControllerListener implements TcpConnection.Listener {
    */
   @Override
   public void onMessageReceived(final TcpConnection connection, final Object message) {
-    LOGGER.info("onMessageReceived");
+    LOGGER.info("onMessageReceived-> " + new String((byte[]) message));
     for(final Method receiveMethod : receiveMethods) {
       final Class<?> aClass = receiveMethod.getParameterTypes()[1];
       if(aClass.isAssignableFrom(message.getClass())) {

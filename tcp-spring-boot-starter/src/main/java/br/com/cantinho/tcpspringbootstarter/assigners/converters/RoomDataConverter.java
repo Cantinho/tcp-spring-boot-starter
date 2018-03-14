@@ -1,11 +1,15 @@
 package br.com.cantinho.tcpspringbootstarter.assigners.converters;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.lang.reflect.Method;
 
 public class RoomDataConverter {
 
   public static RoomData jsonize(final Object object) throws Exception {
     final Class clazz = object.getClass();
+
+    System.out.println("-------> " + new ObjectMapper().writeValueAsString(object));
 
     RoomData roomData = new RoomData();
 

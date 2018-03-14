@@ -39,11 +39,22 @@ public class RoomApplication implements Application {
     }
 
     final List<Bag> returnList = new ArrayList<>();
-    for(final UserIdentifier userIdentifier : userIdentifiers) {
-      final String currentUci = userIdentifier.getUci();
-      final RoomData roomData = new RoomData(request.getFrom(), userIdentifier.getName(), request.getMsg());
-      returnList.add(new Bag(currentUci, roomData, userIdentifier.getVersion()));
+    if(null != request.getTo() && !request.getTo().isEmpty()) {
+      for(final UserIdentifier userIdentifier : userIdentifiers) {
+        if(userIdentifier.getName().equals(request.getTo())) {
+          final String currentUci = userIdentifier.getUci();
+          final RoomData roomData = new RoomData(request.getFrom(), userIdentifier.getName(), request.getMsg());
+          returnList.add(new Bag(currentUci, roomData, userIdentifier.getVersion()));
+        }
+      }
+    } else {
+      for(final UserIdentifier userIdentifier : userIdentifiers) {
+        final String currentUci = userIdentifier.getUci();
+        final RoomData roomData = new RoomData(request.getFrom(), userIdentifier.getName(), request.getMsg());
+        returnList.add(new Bag(currentUci, roomData, userIdentifier.getVersion()));
+      }
     }
+
 
     return returnList;
   }
