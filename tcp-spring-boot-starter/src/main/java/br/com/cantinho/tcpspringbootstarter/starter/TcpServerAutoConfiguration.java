@@ -5,6 +5,7 @@ import br.com.cantinho.tcpspringbootstarter.applications.RoomApplication;
 import br.com.cantinho.tcpspringbootstarter.assigners.*;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.IConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.RoomV1DataConverter;
+import br.com.cantinho.tcpspringbootstarter.assigners.converters.RoomV2DataConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.V1DataConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.V2DataConverter;
 import br.com.cantinho.tcpspringbootstarter.clients.BasicClientHandler;
@@ -104,6 +105,7 @@ public class TcpServerAutoConfiguration {
 
     final List<IConverter> roomConverters = new ArrayList<>();
     roomConverters.add(new RoomV1DataConverter());
+    roomConverters.add(new RoomV2DataConverter());
 
     if(echoConverters.isEmpty() && roomConverters.isEmpty()) {
       throw new RuntimeException("Converters doesn't exist.");

@@ -1,7 +1,10 @@
 package br.com.cantinho.service;
 
 import br.com.cantinho.domain.RoomV1Data;
+import br.com.cantinho.domain.RoomV2Data;
 import br.com.cantinho.domain.SimpleMessage;
+import br.com.cantinho.domain.V1Data;
+import br.com.cantinho.domain.V2Data;
 import br.com.cantinho.utils.Utils;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
@@ -104,12 +107,22 @@ public class ClientImpl implements Client {
           //sslSocket.getLocalAddress().getHostName() + ":" + sslSocket.getLocalPort();
           while (true == true) {
             try {
-              System.out.print("[client] room to connect: ");
-              final String room = new Scanner(System.in).nextLine();
+              System.out.print("[client] data version (v1, v2): ");
+              final String data = new Scanner(System.in).nextLine();
               System.out.print("[client] message to send: ");
               final String message = new Scanner(System.in).nextLine();
 
-              outputStream.write(new Gson().toJson(new RoomV1Data(client, room, message)).getBytes());
+              Object obj = null;
+              switch (data) {
+                case "v1":
+                  obj = new RoomV1Data(client, "broadcast", message);
+                  break;
+                case "v2":
+                  obj = new RoomV2Data(client, "broadcast", message);
+                  break;
+              }
+
+              outputStream.write(new Gson().toJson(obj).getBytes());
               outputStream.flush();
             } catch (IOException e) {
               e.printStackTrace();

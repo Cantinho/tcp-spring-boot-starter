@@ -16,6 +16,13 @@ public class RoomDataConverter {
       roomData.setFrom((String) getSource.invoke(object));
       roomData.setTo((String) getDestination.invoke(object));
       roomData.setMsg((String) getPayload.invoke(object));
+    } else if(RoomV2Data.class.equals(clazz)) {
+      final Method getSource = object.getClass().getDeclaredMethod("getF");
+      final Method getDestination = object.getClass().getDeclaredMethod("getT");
+      final Method getPayload = object.getClass().getDeclaredMethod("getM");
+      roomData.setFrom((String) getSource.invoke(object));
+      roomData.setTo((String) getDestination.invoke(object));
+      roomData.setMsg((String) getPayload.invoke(object));
     } else {
       throw new Exception("fail");
     }
@@ -34,6 +41,13 @@ public class RoomDataConverter {
         v1Data.setMsg(obj.getMsg());
         return v1Data;
       }
+      case RoomDataConverter.DataType.ROOMV2DATA: {
+        final RoomV2Data v2Data = new RoomV2Data();
+        v2Data.setF(obj.getFrom());
+        v2Data.setT(obj.getTo());
+        v2Data.setM(obj.getMsg());
+        return v2Data;
+      }
       default:
         throw new Exception("fail.");
     }
@@ -42,6 +56,7 @@ public class RoomDataConverter {
 
   private static class DataType {
     private static final String ROOMV1DATA = "RoomV1Data";
+    private static final String ROOMV2DATA = "RoomV2Data";
   }
 
 }

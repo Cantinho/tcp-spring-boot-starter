@@ -99,9 +99,9 @@ public class RoomAssignable extends Assignable {
     try {
 
       final RoomData request = RoomDataConverter.jsonize(data);
-      final List<RoomApplication.Bag> bags = (List<RoomApplication.Bag>) application.process(uci, request);
+      final List<RoomApplication.Bag> bags = (List<RoomApplication.Bag>) application.process(uci, clazz, request);
       for(final RoomApplication.Bag bag : bags) {
-        final Object objectData = RoomDataConverter.dejsonizeFrom(clazz, bag.getRoomData());
+        final Object objectData = RoomDataConverter.dejsonizeFrom(bag.getVersion(), bag.getRoomData());
         final String jsonInString = mapper.writeValueAsString(objectData);
         try {
           send(bag.getUci(), jsonInString.getBytes());

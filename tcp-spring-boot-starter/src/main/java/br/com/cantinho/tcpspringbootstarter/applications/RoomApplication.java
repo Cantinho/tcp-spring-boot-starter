@@ -19,19 +19,20 @@ public class RoomApplication implements Application {
   public Object process(Object... parameters) {
     LOGGER.debug("process");
     final String uci = (String) parameters[0];
-    final RoomData request = (RoomData) parameters[1];
+    final Class clazz = (Class) parameters[1];
+    final RoomData request = (RoomData) parameters[2];
 
     boolean found = false;
     final ListIterator<UserIdentifier> listIterator = userIdentifiers.listIterator();
     while (listIterator.hasNext()) {
       final UserIdentifier userIdentifier = listIterator.next();
       if(userIdentifier.getName().equals(request.getFrom())) {
-        listIterator.set(new UserIdentifier(uci, userIdentifier.getName()));
+        listIterator.set(new UserIdentifier(uci, userIdentifier.getName(), clazz));
         found = true;
       }
     }
     if(!found) {
-      userIdentifiers.add(new UserIdentifier(uci, request.getFrom()));
+      userIdentifiers.add(new UserIdentifier(uci, request.getFrom(), clazz));
     }
     for(UserIdentifier id : userIdentifiers) {
       LOGGER.info("id: {}", id.toString());
@@ -41,7 +42,7 @@ public class RoomApplication implements Application {
     for(final UserIdentifier userIdentifier : userIdentifiers) {
       final String currentUci = userIdentifier.getUci();
       final RoomData roomData = new RoomData(request.getFrom(), userIdentifier.getName(), request.getMsg());
-      returnList.add(new Bag(currentUci, roomData));
+      returnList.add(new Bag(currentUci, roomData, userIdentifier.getVersion()));
     }
 
     return returnList;
@@ -68,13 +69,15 @@ public class RoomApplication implements Application {
 
     private String uci;
     private String name;
+    private Class version;
 
     public UserIdentifier() {
     }
 
-    public UserIdentifier(String uci, String name) {
+    private UserIdentifier(final String uci, final String name, final Class version) {
       this.uci = uci;
       this.name = name;
+      this.version = version;
     }
 
     public String getUci() {
@@ -93,11 +96,20 @@ public class RoomApplication implements Application {
       this.name = name;
     }
 
+    public Class getVersion() {
+      return version;
+    }
+
+    public void setVersion(Class version) {
+      this.version = version;
+    }
+
     @Override
     public String toString() {
       return "UserIdentifier{" +
           "uci='" + uci + '\'' +
           ", name='" + name + '\'' +
+          ", version=" + version +
           '}';
     }
   }
@@ -105,10 +117,12 @@ public class RoomApplication implements Application {
   public class Bag {
     private String uci;
     private RoomData roomData;
+    private Class version;
 
-    public Bag(String uci, RoomData roomData) {
+    public Bag(final String uci, final RoomData roomData, final Class version) {
       this.uci = uci;
       this.roomData = roomData;
+      this.version = version;
     }
 
     public String getUci() {
@@ -125,6 +139,14 @@ public class RoomApplication implements Application {
 
     public void setRoomData(RoomData roomData) {
       this.roomData = roomData;
+    }
+
+    public Class getVersion() {
+      return version;
+    }
+
+    public void setVersion(Class version) {
+      this.version = version;
     }
   }
 
