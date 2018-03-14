@@ -1,16 +1,13 @@
 package br.com.cantinho.tcpspringbootstarter.assigners;
 
 import br.com.cantinho.tcpspringbootstarter.applications.Application;
-import br.com.cantinho.tcpspringbootstarter.applications.ChatApplication;
-import br.com.cantinho.tcpspringbootstarter.applications.RoomApplication;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.ChatApplication;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatData;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatDataConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.IConverter;
-import br.com.cantinho.tcpspringbootstarter.assigners.converters.V1Data;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.Versionable;
 import br.com.cantinho.tcpspringbootstarter.clients.Transmitter;
 import br.com.cantinho.tcpspringbootstarter.data.DataHandlerException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,6 +102,7 @@ public class ChatAssignable extends Assignable {
 
       final ChatData request = ChatDataConverter.jsonize(data);
       final List<ChatApplication.Bag> bags = (List<ChatApplication.Bag>) application.process(uci, clazz, request);
+
       for(final ChatApplication.Bag bag : bags) {
         final Object objectData = ChatDataConverter.dejsonizeFrom(bag.getVersion(), bag.getChatData());
         final String jsonInString = mapper.writeValueAsString(objectData);

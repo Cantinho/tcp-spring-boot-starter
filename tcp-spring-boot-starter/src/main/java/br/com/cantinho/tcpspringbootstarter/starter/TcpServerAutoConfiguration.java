@@ -1,6 +1,6 @@
 package br.com.cantinho.tcpspringbootstarter.starter;
 
-import br.com.cantinho.tcpspringbootstarter.applications.ChatApplication;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.ChatApplication;
 import br.com.cantinho.tcpspringbootstarter.applications.EchoApplication;
 import br.com.cantinho.tcpspringbootstarter.applications.RoomApplication;
 import br.com.cantinho.tcpspringbootstarter.assigners.*;
