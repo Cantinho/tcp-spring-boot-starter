@@ -1,7 +1,11 @@
 package br.com.cantinho.service;
 
+import br.com.cantinho.domain.ChatV1Data;
 import br.com.cantinho.domain.RoomV1Data;
+import br.com.cantinho.domain.RoomV2Data;
 import br.com.cantinho.domain.SimpleMessage;
+import br.com.cantinho.domain.V1Data;
+import br.com.cantinho.domain.V2Data;
 import br.com.cantinho.utils.Utils;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
@@ -24,6 +28,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.Scanner;
 
 @Component
@@ -90,32 +95,32 @@ public class ClientImpl implements Client {
    * Listens for user inputs to send to a server in a secure socket communication.
    */
   private void runSecureCommunication(){
-    try (
-        final SSLSocket sslSocket = getSSLSocket();
-        final OutputStream outputStream = sslSocket.getOutputStream();
-        final InputStream inputStream = sslSocket.getInputStream()
-    ) {
+    try {
+      final SSLSocket sslSocket = getSSLSocket();
+      final OutputStream outputStream = sslSocket.getOutputStream();
+      final InputStream inputStream = sslSocket.getInputStream();
       sslSocket.startHandshake();
 
-      while(true) {
-        final String client = sslSocket.getLocalAddress().getHostName() + ":" + sslSocket.getLocalPort();
-        System.out.print("[client] room to connect: ");
-        final String room = new Scanner(System.in).nextLine();
-        System.out.print("[client] message to send: ");
-        final String message = new Scanner(System.in).nextLine();
+      //TODO: select correct client runner
+      //runRoomClient(outputStream);
+      runChatClient(outputStream);
 
-        outputStream.write(new Gson().toJson(new RoomV1Data(client, room, message)).getBytes());
-        outputStream.flush();
-
-        final byte[] buffer = new byte[BUFFER_SIZE];
-        final int size = inputStream.read(buffer);
-        if (size < 0) {
-          LOGGER.warn("[client]: no bytes to read");
-          break;
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          final byte[] buffer = new byte[BUFFER_SIZE];
+          int size = 0;
+          try{
+            while ((size = inputStream.read(buffer)) >= 0) {
+              final byte[] response = Arrays.copyOfRange(buffer, 0, size);
+              LOGGER.info("[client]: {}", new String(response));
+            }
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
         }
-        final byte[] response = Arrays.copyOfRange(buffer, 0, size);
-        LOGGER.info("[client]: {}", new String(response));
-      }
+      }).start();
+
     } catch (Exception exc) {
       LOGGER.error("[error]: {}", exc.getMessage());
     }
@@ -185,6 +190,73 @@ public class ClientImpl implements Client {
       throw new Exception("Could not establish secure communication.", exc);
     }
     throw new Exception("Could not establish secure communication.");
+  }
+
+  private void runRoomClient(final OutputStream outputStream) {
+    new Thread(() -> {
+      System.out.print("[client] client name: ");
+      final String client = new Scanner(System.in).nextLine();
+      while (true == true) {
+        try {
+          System.out.print("[client] data version (v1, v2): ");
+          final String data = new Scanner(System.in).nextLine();
+          System.out.print("[client] send message to: ");
+          final String to = new Scanner(System.in).nextLine();
+          System.out.print("[client] message to send: ");
+          final String message = new Scanner(System.in).nextLine();
+
+          Object obj = null;
+          switch (data) {
+            case "v1":
+              obj = new RoomV1Data(client, to, message);
+              break;
+            case "v2":
+              obj = new RoomV2Data(client, to, message);
+              break;
+          }
+
+          String str = new Gson().toJson(obj);
+          //LOGGER.info("message being sent: " + str);
+
+          outputStream.write(str.getBytes());
+          outputStream.flush();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+    }).start();
+  }
+
+  private void runChatClient(final OutputStream outputStream) {
+    new Thread(() -> {
+      System.out.print("[client] client name: ");
+      final String client = new Scanner(System.in).nextLine();
+      while (true == true) {
+        try {
+          final String data = "v1";
+          System.out.print("[client] command: ");
+          final String cmd = new Scanner(System.in).nextLine();
+          System.out.print("[client] to: ");
+          final String to = new Scanner(System.in).nextLine();
+          System.out.print("[client] message: ");
+          final String message = new Scanner(System.in).nextLine();
+
+          Object obj = null;
+          switch (data) {
+            case "v1":
+              obj = new ChatV1Data(client, to, cmd, message);
+              break;
+          }
+
+          String str = new Gson().toJson(obj);
+
+          outputStream.write(str.getBytes());
+          outputStream.flush();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+    }).start();
   }
 
   @Override
