@@ -1,8 +1,11 @@
 package br.com.cantinho.tcpspringbootstarter.applications.chat;
 
 import br.com.cantinho.tcpspringbootstarter.applications.Application;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions.DistinctRoomException;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions.RoomAlreadyExistsException;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions.RoomNotFoundException;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions
+    .SenderUserNotFoundException;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions
     .UserConnectedToAnotherRoomException;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions
@@ -502,8 +505,37 @@ public class ChatApplication implements Application {
    * @throws Exception if sender is not connected to the server, if sender room does not exist, if
    * destination is not connected to the server, if destination is not in the same room as sender.
    */
-  private void sendMessageToSpecificUserInRoom(final Class clazz, final String uci, final ChatData data) {
+  private Object sendMessageToSpecificUserInRoom(
+      final Class clazz,
+      final String uci,
+      final ChatData data) throws RoomNotFoundException, UserNotConnectedException, DistinctRoomException {
+    final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
+    UserIdentifier sender = null;
+    UserIdentifier destination = null;
+    while(iterator.hasNext()) {
+      final UserIdentifier user = iterator.next();
+      if(user.getName().equals(data.getFrom())) {
+        sender = user;
+      }
+      if(user.getName().equals(data.getTo())) {
+        destination = user;
+      }
+    }
+    if(null == sender) {
+      throw new UserNotConnectedException(uci, data.getFrom(), "Sender user not connected.");
+    }
+    if(null == destination) {
+      throw new UserNotConnectedException(uci, data.getFrom(), "Destination user not connected.");
+    }
+    if(!rooms.containsKey(sender.getRoom())) {
+      throw new RoomNotFoundException(sender.getRoom());
+    }
+    if(!sender.getRoom().equals(destination.getRoom())) {
+      throw new DistinctRoomException(sender.getRoom(), destination.getRoom());
+    }
 
+    // TODO: return correct data
+    return null;
   }
 
   /**
@@ -516,8 +548,30 @@ public class ChatApplication implements Application {
    * @throws Exception if sender is not connected to the server, if sender room does not exist,
    * if sender is not in the room he is trying to send a message to.
    */
-  private void sendMessageToAllUsersInRoom(final Class clazz, final String uci, final ChatData data) {
+  private Object sendMessageToAllUsersInRoom(
+      final Class clazz,
+      final String uci,
+      final ChatData data) throws UserNotConnectedException, RoomNotFoundException, DistinctRoomException {
+    final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
+    UserIdentifier sender = null;
+    while(iterator.hasNext()) {
+      final UserIdentifier user = iterator.next();
+      if(user.getName().equals(data.getFrom())) {
+        sender = user;
+      }
+    }
+    if(null == sender) {
+      throw new UserNotConnectedException(uci, data.getFrom(), "Sender user not connected.");
+    }
+    if(!rooms.containsKey(sender.getRoom())) {
+      throw new RoomNotFoundException(sender.getRoom());
+    }
+    if(!sender.getRoom().equals(data.getTo())) {
+      throw new DistinctRoomException(sender.getRoom(), data.getTo());
+    }
 
+    // TODO: iterate over all users and build the correct data to send back
+    return null;
   }
 
   /**
@@ -530,8 +584,29 @@ public class ChatApplication implements Application {
    * @throws Exception if sender is not connected to the server, if destination is not connected
    * to the server.
    */
-  private void sendMessageToSpecificUser(final Class clazz, final String uci, final ChatData data) {
+  private Object sendMessageToSpecificUser(final Class clazz, final String uci, final ChatData
+      data) throws UserNotConnectedException {
+    final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
+    UserIdentifier sender = null;
+    UserIdentifier destination = null;
+    while(iterator.hasNext()) {
+      final UserIdentifier user = iterator.next();
+      if(user.getName().equals(data.getFrom())) {
+        sender = user;
+      }
+      if(user.getName().equals(data.getTo())) {
+        destination = user;
+      }
+    }
+    if(null == sender) {
+      throw new UserNotConnectedException(uci, data.getFrom(), "Sender user not connected.");
+    }
+    if(null == destination) {
+      throw new UserNotConnectedException(uci, data.getFrom(), "Destination user not connected.");
+    }
 
+    // TODO: build correct data to send back
+    return null;
   }
 
   /**
@@ -542,8 +617,22 @@ public class ChatApplication implements Application {
    * @param data a ChatData data instance.
    * @throws Exception if sender is not connected to the server.
    */
-  private void sendMessageToAllUsers(final Class clazz, final String uci, final ChatData data) {
+  private Object sendMessageToAllUsers(final Class clazz, final String uci, final ChatData data)
+      throws UserNotConnectedException {
+    final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
+    UserIdentifier sender = null;
+    while(iterator.hasNext()) {
+      final UserIdentifier user = iterator.next();
+      if(user.getName().equals(data.getFrom())) {
+        sender = user;
+      }
+    }
+    if(null == sender) {
+      throw new UserNotConnectedException(uci, data.getFrom(), "Sender user not connected.");
+    }
 
+    // TODO: iterate over all users and build the correct data to send back
+    return null;
   }
 
 }
