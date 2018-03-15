@@ -1,10 +1,13 @@
 package br.com.cantinho.tcpspringbootstarter.starter;
 
+import br.com.cantinho.tcpspringbootstarter.applications.chat.ChatApplication;
 import br.com.cantinho.tcpspringbootstarter.applications.EchoApplication;
 import br.com.cantinho.tcpspringbootstarter.applications.RoomApplication;
 import br.com.cantinho.tcpspringbootstarter.assigners.*;
+import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatV1DataConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.IConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.RoomV1DataConverter;
+import br.com.cantinho.tcpspringbootstarter.assigners.converters.RoomV2DataConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.V1DataConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.V2DataConverter;
 import br.com.cantinho.tcpspringbootstarter.clients.BasicClientHandler;
@@ -104,14 +107,19 @@ public class TcpServerAutoConfiguration {
 
     final List<IConverter> roomConverters = new ArrayList<>();
     roomConverters.add(new RoomV1DataConverter());
+    roomConverters.add(new RoomV2DataConverter());
 
-    if(echoConverters.isEmpty() && roomConverters.isEmpty()) {
+    final List<IConverter> chatConverters = new ArrayList<>();
+    chatConverters.add(new ChatV1DataConverter());
+
+    if(echoConverters.isEmpty() && roomConverters.isEmpty() && chatConverters.isEmpty()) {
       throw new RuntimeException("Converters doesn't exist.");
     }
 
     final List<Assignable> assignables = new ArrayList<>();
     assignables.add(new EchoAssignable(echoConverters, clientHandler(), new EchoApplication()));
     assignables.add(new RoomAssignable(roomConverters, clientHandler(), new RoomApplication()));
+    assignables.add(new ChatAssignable(chatConverters, clientHandler(), new ChatApplication()));
 
     if(assignables.isEmpty()) {
       throw new RuntimeException("Assignable doesn't exist.");

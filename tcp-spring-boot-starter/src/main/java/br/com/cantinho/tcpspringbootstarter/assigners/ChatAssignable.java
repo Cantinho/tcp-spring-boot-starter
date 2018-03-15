@@ -1,11 +1,13 @@
 package br.com.cantinho.tcpspringbootstarter.assigners;
 
 import br.com.cantinho.tcpspringbootstarter.applications.Application;
-import br.com.cantinho.tcpspringbootstarter.applications.RoomApplication;
-import br.com.cantinho.tcpspringbootstarter.assigners.converters.*;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.ChatApplication;
+import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatData;
+import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatDataConverter;
+import br.com.cantinho.tcpspringbootstarter.assigners.converters.IConverter;
+import br.com.cantinho.tcpspringbootstarter.assigners.converters.Versionable;
 import br.com.cantinho.tcpspringbootstarter.clients.Transmitter;
 import br.com.cantinho.tcpspringbootstarter.data.DataHandlerException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,12 +21,12 @@ import static br.com.cantinho.tcpspringbootstarter.data.DataHandler.getVersionab
 /**
  * Echos message to client.
  */
-public class RoomAssignable extends Assignable {
+public class ChatAssignable extends Assignable {
 
   /**
    * A logger instance.
    */
-  private static final Logger LOGGER = LoggerFactory.getLogger(RoomAssignable.class.getCanonicalName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(ChatAssignable.class.getCanonicalName());
 
   /**
    * Converters.
@@ -37,7 +39,7 @@ public class RoomAssignable extends Assignable {
    * @param converters
    * @throws AssignableException
    */
-  public RoomAssignable(final List<IConverter> converters, final Transmitter transmitter, final
+  public ChatAssignable(final List<IConverter> converters, final Transmitter transmitter, final
   Application application) throws
       AssignableException {
     super(transmitter, application);
@@ -54,7 +56,7 @@ public class RoomAssignable extends Assignable {
    */
   @Override
   public String getName() {
-    return RoomAssignable.class.getCanonicalName();
+    return ChatAssignable.class.getCanonicalName();
   }
 
   @Override
@@ -98,10 +100,11 @@ public class RoomAssignable extends Assignable {
     //Object to JSON in String
     try {
 
-      final RoomData request = RoomDataConverter.jsonize(data);
-      final List<RoomApplication.Bag> bags = (List<RoomApplication.Bag>) application.process(uci, clazz, request);
-      for(final RoomApplication.Bag bag : bags) {
-        final Object objectData = RoomDataConverter.dejsonizeFrom(bag.getVersion(), bag.getRoomData());
+      final ChatData request = ChatDataConverter.jsonize(data);
+      final List<ChatApplication.Bag> bags = (List<ChatApplication.Bag>) application.process(uci, clazz, request);
+
+      for(final ChatApplication.Bag bag : bags) {
+        final Object objectData = ChatDataConverter.dejsonizeFrom(bag.getVersion(), bag.getChatData());
         final String jsonInString = mapper.writeValueAsString(objectData);
         try {
           send(bag.getUci(), jsonInString.getBytes());
