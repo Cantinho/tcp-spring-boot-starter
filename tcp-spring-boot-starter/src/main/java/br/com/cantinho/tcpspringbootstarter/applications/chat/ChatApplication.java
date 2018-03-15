@@ -1,7 +1,17 @@
 package br.com.cantinho.tcpspringbootstarter.applications.chat;
 
 import br.com.cantinho.tcpspringbootstarter.applications.Application;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions.RoomAlreadyExistsException;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions.RoomNotFoundException;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions
+    .UserConnectedToAnotherRoomException;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions
+    .UserDoesNotBelongToAnyRoomException;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions.UserNotConnectedException;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions
+    .UserOwnerOfAnotherRoomException;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatData;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +33,11 @@ public class ChatApplication implements Application {
 
   private final List<UserIdentifier> userIdentifiers = Collections.synchronizedList(new ArrayList<>());
 
+  /**
+   * Map containing rooms and user owners.
+   * - rooms.key : room name
+   * - rooms.value : owner user
+   */
   private final Map<String, String> rooms = Collections.synchronizedMap(new HashMap<>());
 
   @Override
@@ -92,6 +107,7 @@ public class ChatApplication implements Application {
 
   private class UserIdentifier{
 
+    private static final long ALIVE_TIME_IN_MILLIS = 30000;
     private Class version;
     private String uci;
     private String name;
@@ -103,7 +119,7 @@ public class ChatApplication implements Application {
      * @return true if user is active, false otherwise.
      */
     public boolean isActive(){
-      return (new Date().getTime() - lastUpdatedAt) <= 30000;
+      return (new Date().getTime() - lastUpdatedAt) <= ALIVE_TIME_IN_MILLIS;
     }
 
     /**
@@ -206,7 +222,7 @@ public class ChatApplication implements Application {
    *
    * @param clazz a Class version instance.
    * @param uci a String Unique Connection Identifier.
-   * @param data a ChatData room instance.
+   * @param data a ChatData data instance.
    * @throws Exception
    */
   private void processCommand(final Class clazz, final String uci, final ChatData data)
@@ -219,6 +235,7 @@ public class ChatApplication implements Application {
         createRoom(clazz, uci, data);
         break;
       case ChatCommands.DISCONNECT:
+        disconnect(clazz, uci, data);
         break;
       case ChatCommands.JOIN_ROOM:
         join(clazz, uci, data);
@@ -230,12 +247,16 @@ public class ChatApplication implements Application {
         leaveRoom(clazz, uci, data);
         break;
       case ChatCommands.SEND_SUR:
+        sendMessageToSpecificUserInRoom(clazz, uci, data);
         break;
       case ChatCommands.SEND_BUR:
+        sendMessageToAllUsersInRoom(clazz, uci, data);
         break;
       case ChatCommands.SEND_SGU:
+        sendMessageToSpecificUser(clazz, uci, data);
         break;
       case ChatCommands.SEND_BGU:
+        sendMessageToAllUsers(clazz, uci, data);
         break;
       case ChatCommands.USERS_ROOM:
         break;
@@ -243,10 +264,11 @@ public class ChatApplication implements Application {
   }
 
   /**
+   * Connects an user to the server. If user is already connected, updates it's information.
    *
    * @param clazz a Class version instance.
    * @param uci a String Unique Connection Identifier.
-   * @param data a ChatData room instance.
+   * @param data a ChatData data instance.
    */
   private void connect(final Class clazz, final String uci, final ChatData data) {
     boolean found = false;
@@ -264,57 +286,106 @@ public class ChatApplication implements Application {
   }
 
   /**
+   * Disconnects an user from server. If user is in a room, leaves the room and notifies all users
+   * in the same room. If user is owner of the room, notify and remove all users from the room,
+   * and remove the room.
    *
    * @param clazz a Class version instance.
    * @param uci a String Unique Connection Identifier.
-   * @param data a ChatData room instance.
-   * @throws Exception
+   * @param data a ChatData data instance.
    */
-  private void join(final Class clazz, final String uci, final ChatData data) throws Exception {
+  private void disconnect(final Class clazz, final String uci, final ChatData data) {
+    try {
+      leaveRoom(clazz, uci, data);
+    } catch (RoomNotFoundException e) {
+      e.printStackTrace();
+    } catch (UserConnectedToAnotherRoomException e) {
+      e.printStackTrace();
+    } catch (UserNotConnectedException e) {
+      e.printStackTrace();
+    } catch (UserDoesNotBelongToAnyRoomException e) {
+      e.printStackTrace();
+    }
+    // TODO: notify user and disconnect it.
+  }
+
+  /**
+   * Makes a user ingress into a room for conversation.
+   *
+   * @param clazz a Class version instance.
+   * @param uci a String Unique Connection Identifier.
+   * @param data a ChatData data instance.
+   * @throws Exception if room does not exist, if user is connected to another room, if user is
+   * not connected to the server.
+   */
+  private void join(final Class clazz, final String uci, final ChatData data)
+      throws RoomNotFoundException, UserConnectedToAnotherRoomException, UserNotConnectedException {
     final UserIdentifier updatedUserIdentifier = new UserIdentifier(clazz, uci, data.getFrom(),
         data.getMsg());
 
     if(!rooms.containsKey(data.getMsg())) {
-      throw new Exception("room does not exist.");
+      throw new RoomNotFoundException(data.getMsg());
     }
 
     boolean found = false;
     final ListIterator<UserIdentifier> listIterator = userIdentifiers.listIterator();
     while (listIterator.hasNext()) {
       final UserIdentifier userIdentifier = listIterator.next();
+      if(!StringUtils.isBlank(userIdentifier.getRoom())) {
+        throw new UserConnectedToAnotherRoomException(uci, data.getFrom(),
+            userIdentifier.getRoom(), data.getMsg());
+      }
       if(userIdentifier.getName().equals(data.getFrom())) {
         listIterator.set(updatedUserIdentifier);
         found = true;
       }
     }
     if(!found) {
-      throw new Exception("user not connected");
+      throw new UserNotConnectedException(uci, data.getFrom());
     }
   }
 
   /**
    * Removes user from room. If user has created the room, everybody is gonna leave the room.
+   *
    * @param clazz a Class version instance.
    * @param uci a String Unique Connection Identifier.
-   * @param data a ChatData room instance.
-   * @throws Exception if user
+   * @param data a ChatData data instance.
+   * @throws Exception if room does not exist, if user is not in the room he is trying to leave,
+   * if user is not connected.
    */
-  private void leaveRoom(final Class clazz, final String uci, final ChatData data) throws
-      Exception {
+  private void leaveRoom(final Class clazz, final String uci, final ChatData data)
+      throws RoomNotFoundException, UserConnectedToAnotherRoomException, UserNotConnectedException,
+      UserDoesNotBelongToAnyRoomException {
 
     if(!rooms.containsKey(data.getMsg())) {
-      throw new Exception("room does not exist.");
+      throw new RoomNotFoundException(data.getMsg());
     }
 
+    // rooms.key : room name
+    // rooms.value : owner user
     for(final Map.Entry<String, String> entry : rooms.entrySet()) {
       if(entry.getValue().equals(data.getFrom())) {
         if(entry.getKey().equals(data.getMsg())) {
-          // todo mundo remover exclusicv eu
+          final String room = data.getMsg();
+
+          ListIterator<UserIdentifier> listIterator = userIdentifiers.listIterator();
+          while (listIterator.hasNext()) {
+            UserIdentifier userIdentifier = listIterator.next();
+            if(room.equals(userIdentifier.getRoom())) {
+              userIdentifier.setRoom("");
+              listIterator.set(userIdentifier);
+              //TODO: notify user that room owner has disconnected from room
+            }
+          }
+
+          rooms.remove(room);
           LOGGER.info("Everyone leaves the room because I'm owner.");
-          // TODO returns complete response
           return;
         } else {
-          throw new Exception("an inconsistency was found in room properties");
+          // I'm owner of a room and I'm trying to leave another room. I'm can only be in one
+          // room at a time.
+          throw new IllegalStateException("An inconsistency was found in room properties");
         }
       }
     }
@@ -324,13 +395,20 @@ public class ChatApplication implements Application {
     while (listIterator.hasNext()) {
       final UserIdentifier userIdentifier = listIterator.next();
       if(userIdentifier.getName().equals(data.getFrom())) {
+        if(StringUtils.isBlank(userIdentifier.getRoom())) {
+          throw new UserDoesNotBelongToAnyRoomException(uci, data.getFrom(), data.getMsg());
+        }
+        if(!data.getMsg().equals(userIdentifier.getRoom())) {
+          throw new UserConnectedToAnotherRoomException(uci, data.getFrom(),
+              userIdentifier.getRoom(), data.getMsg());
+        }
         userIdentifier.setRoom("");
         listIterator.set(userIdentifier);
         found = true;
       }
     }
     if(!found) {
-      throw new Exception("user not connected.");
+      throw new UserNotConnectedException(uci, data.getFrom());
     }
   }
 
@@ -339,41 +417,52 @@ public class ChatApplication implements Application {
    *
    * @param clazz a Class version instance.
    * @param uci a String Unique Connection Identifier.
-   * @param data a ChatData room instance.
+   * @param data a ChatData data instance.
    * @throws Exception if user is not connected.
    */
-  private void keepAlive(final Class clazz, final String uci, final ChatData data) throws Exception {
+  private void keepAlive(final Class clazz, final String uci, final ChatData data)
+      throws UserNotConnectedException {
     boolean found = false;
     final ListIterator<UserIdentifier> listIterator = userIdentifiers.listIterator();
     while (listIterator.hasNext()) {
       final UserIdentifier userIdentifier = listIterator.next();
       if(userIdentifier.getName().equals(data.getFrom())) {
+        if(!userIdentifier.isActive()) {
+          // TODO: notify user and disconnect
+          return;
+        }
         userIdentifier.keepAlive();
         listIterator.set(userIdentifier);
         found = true;
       }
     }
     if(!found) {
-      throw new Exception("user not connected.");
+      throw new UserNotConnectedException(uci, data.getFrom());
     }
   }
 
   /**
-   * Creates a room and sets himself as owner, if it does not exist.
+   * Creates a room and sets himself as owner, if it does not exist. You can only create a room
+   * if you are connected and if you are not in another room.
    *
    * @param clazz a Class version instance.
    * @param uci a String Unique Connection Identifier.
-   * @param data a ChatData room instance.
+   * @param data a ChatData data instance.
    * @throws Exception if room already exists, if user is already connected to another room, if
    * user is trying to create a room and is not connected.
    */
-  private void createRoom(final Class clazz, final String uci, final ChatData data) throws Exception {
+  private void createRoom(final Class clazz, final String uci, final ChatData data)
+      throws RoomAlreadyExistsException, UserOwnerOfAnotherRoomException,
+      UserConnectedToAnotherRoomException, UserNotConnectedException {
 
     if(rooms.containsKey(data.getMsg())) {
-      throw new Exception("room already created.");
+      throw new RoomAlreadyExistsException(data.getMsg());
     }
-    if(rooms.containsValue(data.getFrom())) {
-      throw new Exception("user is already connected to another room.");
+
+    for(Map.Entry<String, String> entry : rooms.entrySet()) {
+      if(entry.getValue().equals(data.getFrom())) {
+        throw new UserOwnerOfAnotherRoomException(uci, data.getFrom(), entry.getKey(), data.getMsg());
+      }
     }
 
     boolean found = false;
@@ -381,6 +470,14 @@ public class ChatApplication implements Application {
     while (listIterator.hasNext()) {
       final UserIdentifier userIdentifier = listIterator.next();
       if(userIdentifier.getName().equals(data.getFrom())) {
+        if(!StringUtils.isBlank(userIdentifier.getRoom())) {
+          if(userIdentifier.getRoom().equals(data.getMsg())) {
+            throw new IllegalStateException("User ["+data.getFrom()+"] is connected to a room " +
+                "that does not exist.");
+          }
+          throw new UserConnectedToAnotherRoomException(uci, data.getFrom(), userIdentifier.getRoom(),
+              data.getMsg());
+        }
         userIdentifier.keepAlive();
         userIdentifier.setRoom(data.getMsg());
         listIterator.set(userIdentifier);
@@ -388,11 +485,65 @@ public class ChatApplication implements Application {
       }
     }
     if(!found) {
-      throw new Exception("user not connected.");
+      throw new UserNotConnectedException(uci, data.getFrom());
     }
 
     rooms.put(data.getMsg(), data.getFrom());
   }
 
+  /**
+   * Sends a message to a specific user. The user trying to send a message should be connected to
+   * the system and in an existent room. The destination user should be connected in the server and
+   * be in the same room as the sender user.
+   *
+   * @param clazz a Class version instance.
+   * @param uci a String Unique Connection Identifier.
+   * @param data a ChatData data instance.
+   * @throws Exception if sender is not connected to the server, if sender room does not exist, if
+   * destination is not connected to the server, if destination is not in the same room as sender.
+   */
+  private void sendMessageToSpecificUserInRoom(final Class clazz, final String uci, final ChatData data) {
+
+  }
+
+  /**
+   * Sends a message to all users in a room. The user should be connected to the server. The room
+   * should be an existent room. The user should be in the room.
+   *
+   * @param clazz a Class version instance.
+   * @param uci a String Unique Connection Identifier.
+   * @param data a ChatData data instance.
+   * @throws Exception if sender is not connected to the server, if sender room does not exist,
+   * if sender is not in the room he is trying to send a message to.
+   */
+  private void sendMessageToAllUsersInRoom(final Class clazz, final String uci, final ChatData data) {
+
+  }
+
+  /**
+   * Sends a message to a specific user. The user trying to send a message should be connected to
+   * the system. The destination user should be connected in the server.
+   *
+   * @param clazz a Class version instance.
+   * @param uci a String Unique Connection Identifier.
+   * @param data a ChatData data instance.
+   * @throws Exception if sender is not connected to the server, if destination is not connected
+   * to the server.
+   */
+  private void sendMessageToSpecificUser(final Class clazz, final String uci, final ChatData data) {
+
+  }
+
+  /**
+   * Sends a message to all users. The user should be connected to the server.
+   *
+   * @param clazz a Class version instance.
+   * @param uci a String Unique Connection Identifier.
+   * @param data a ChatData data instance.
+   * @throws Exception if sender is not connected to the server.
+   */
+  private void sendMessageToAllUsers(final Class clazz, final String uci, final ChatData data) {
+
+  }
 
 }
