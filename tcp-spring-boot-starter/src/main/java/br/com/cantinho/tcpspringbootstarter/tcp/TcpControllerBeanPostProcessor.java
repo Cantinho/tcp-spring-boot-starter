@@ -53,7 +53,7 @@ public class TcpControllerBeanPostProcessor implements BeanPostProcessor {
       throws BeansException {
 
 
-    LOGGER.info("postProcessBeforeInitialization");
+    //LOGGER.info("postProcessBeforeInitialization");
     Class<?> beanClass = bean.getClass();
     if(beanClass.isAnnotationPresent(TcpController.class)) {
       LOGGER.info("---TcoController annotation present");
@@ -73,7 +73,7 @@ public class TcpControllerBeanPostProcessor implements BeanPostProcessor {
   public Object postProcessAfterInitialization(final Object bean, final String beanName)
       throws BeansException {
 
-    LOGGER.info("postProcessAfterInitialization");
+    //LOGGER.info("postProcessAfterInitialization");
     if (tcpControllerCache.containsKey(beanName)) {
       LOGGER.info("--- contains key:" + beanName);
       List<Method> receiveMethods = new ArrayList<>();
