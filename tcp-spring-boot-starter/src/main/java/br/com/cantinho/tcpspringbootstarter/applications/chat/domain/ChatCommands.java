@@ -1,6 +1,12 @@
-package br.com.cantinho.tcpspringbootstarter.applications.chat;
+package br.com.cantinho.tcpspringbootstarter.applications.chat.domain;
 
 public class ChatCommands {
+
+  public class ResponseCode {
+    public static final String OK = "_OK";
+    public static final String ERROR = "_ERROR";
+  }
+
   /**
    * Connect (CONNECT)
    * Comando utilizado para conectar um usuário ao servidor. 

@@ -25,4 +25,16 @@ public class UserDoesNotBelongToAnyRoomException extends Exception {
     this.user = user;
     this.room = room;
   }
+
+  public String getUci() {
+    return uci;
+  }
+
+  public String getUser() {
+    return user;
+  }
+
+  public String getRoom() {
+    return room;
+  }
 }

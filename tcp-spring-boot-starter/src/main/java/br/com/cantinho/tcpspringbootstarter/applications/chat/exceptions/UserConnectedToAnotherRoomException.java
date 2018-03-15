@@ -30,4 +30,20 @@ public class UserConnectedToAnotherRoomException extends Exception {
     this.ownedRoom = ownedRoom;
     this.newRoom = newRoom;
   }
+
+  public String getUci() {
+    return uci;
+  }
+
+  public String getUser() {
+    return user;
+  }
+
+  public String getOwnedRoom() {
+    return ownedRoom;
+  }
+
+  public String getNewRoom() {
+    return newRoom;
+  }
 }

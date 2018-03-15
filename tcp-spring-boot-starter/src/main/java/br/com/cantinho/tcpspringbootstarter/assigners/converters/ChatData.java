@@ -10,6 +10,13 @@ public class ChatData {
   public ChatData() {
   }
 
+  public ChatData(final ChatData data) {
+    this.from = data.getFrom();
+    this.to = data.getTo();
+    this.cmd = data.getCmd();
+    this.msg = data.getMsg();
+  }
+
   public ChatData(String from, String to, String cmd, String msg) {
     this.from = from;
     this.to = to;

@@ -2,6 +2,7 @@ package br.com.cantinho.tcpspringbootstarter.assigners;
 
 import br.com.cantinho.tcpspringbootstarter.applications.Application;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.ChatApplication;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.domain.Bag;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatData;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatDataConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.IConverter;
@@ -101,9 +102,9 @@ public class ChatAssignable extends Assignable {
     try {
 
       final ChatData request = ChatDataConverter.jsonize(data);
-      final List<ChatApplication.Bag> bags = (List<ChatApplication.Bag>) application.process(uci, clazz, request);
+      final List<Bag> bags = (List<Bag>) application.process(uci, clazz, request);
 
-      for(final ChatApplication.Bag bag : bags) {
+      for(final Bag bag : bags) {
         final Object objectData = ChatDataConverter.dejsonizeFrom(bag.getVersion(), bag.getChatData());
         final String jsonInString = mapper.writeValueAsString(objectData);
         try {

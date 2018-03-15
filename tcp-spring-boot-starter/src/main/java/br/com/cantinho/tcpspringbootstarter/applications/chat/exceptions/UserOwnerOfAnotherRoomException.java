@@ -30,4 +30,20 @@ public class UserOwnerOfAnotherRoomException extends Exception {
     this.currentRoom = currentRoom;
     this.newRoom = newRoom;
   }
+
+  public String getUci() {
+    return uci;
+  }
+
+  public String getUser() {
+    return user;
+  }
+
+  public String getCurrentRoom() {
+    return currentRoom;
+  }
+
+  public String getNewRoom() {
+    return newRoom;
+  }
 }

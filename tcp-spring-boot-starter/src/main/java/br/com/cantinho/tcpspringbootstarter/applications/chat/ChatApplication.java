@@ -1,11 +1,12 @@
 package br.com.cantinho.tcpspringbootstarter.applications.chat;
 
 import br.com.cantinho.tcpspringbootstarter.applications.Application;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.domain.Bag;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.domain.ChatCommands;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.domain.UserIdentifier;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions.DistinctRoomException;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions.RoomAlreadyExistsException;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions.RoomNotFoundException;
-import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions
-    .SenderUserNotFoundException;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions
     .UserConnectedToAnotherRoomException;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions
@@ -14,15 +15,16 @@ import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions.UserNot
 import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions
     .UserOwnerOfAnotherRoomException;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatData;
+import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -50,45 +52,23 @@ public class ChatApplication implements Application {
     final Class clazz = (Class) parameters[1];
     final ChatData request = (ChatData) parameters[2];
 
-    processChatData(clazz, uci, request);
+    List<Bag> responseBags = new LinkedList<>();
+    try {
 
-    //FIXME: analyze before removing
-    /*boolean found = false;
-    final ListIterator<UserIdentifier> listIterator = userIdentifiers.listIterator();
-    while (listIterator.hasNext()) {
-      final UserIdentifier userIdentifier = listIterator.next();
-      if(userIdentifier.getName().equals(request.getFrom())) {
-        listIterator.set(new UserIdentifier(uci, userIdentifier.getName(), clazz));
-        found = true;
-      }
-    }
-    if(!found) {
-      userIdentifiers.add(new UserIdentifier(uci, request.getFrom(), clazz));
-    }
-    for(UserIdentifier id : userIdentifiers) {
-      LOGGER.info("id: {}", id.toString());
-    }
+      responseBags.addAll(processCommand(clazz, uci, request));
 
-    final List<Bag> returnList = new ArrayList<>();
-    if(null != request.getTo() && !request.getTo().isEmpty()) {
-      for(final UserIdentifier userIdentifier : userIdentifiers) {
-        if(userIdentifier.getName().equals(request.getTo())) {
-          final String currentUci = userIdentifier.getUci();
-          final ChatData chatData = new ChatData(request.getFrom(), userIdentifier.getName(),
-              request.getCmd(), request.getMsg());
-          returnList.add(new Bag(currentUci, chatData, userIdentifier.getVersion()));
-        }
-      }
-    } else {
-      for(final UserIdentifier userIdentifier : userIdentifiers) {
-        final String currentUci = userIdentifier.getUci();
-        final ChatData chatData = new ChatData(request.getFrom(), userIdentifier.getName(),
-            request.getCmd(), request.getMsg());
-        returnList.add(new Bag(currentUci, chatData, userIdentifier.getVersion()));
-      }
-    }*/
-
-    return null;
+    } catch (UserOwnerOfAnotherRoomException
+        | RoomAlreadyExistsException
+        | UserNotConnectedException
+        | UserConnectedToAnotherRoomException
+        | RoomNotFoundException
+        | DistinctRoomException
+        | UserDoesNotBelongToAnyRoomException exc) {
+      exc.printStackTrace();
+      responseBags.add(createDirectResponse(clazz, uci, request.getFrom(), request.getCmd(),
+          ChatCommands.ResponseCode.ERROR, exc.getMessage()));
+    }
+    return responseBags;
   }
 
   @Override
@@ -108,119 +88,6 @@ public class ChatApplication implements Application {
     LOGGER.debug("onDisconnect:{}", uci);
   }
 
-  private class UserIdentifier{
-
-    private static final long ALIVE_TIME_IN_MILLIS = 30000;
-    private Class version;
-    private String uci;
-    private String name;
-    private String room;
-    private Long lastUpdatedAt;
-
-    /**
-     * Returns true if user has made any interaction with server in the last 30 seconds.
-     * @return true if user is active, false otherwise.
-     */
-    public boolean isActive(){
-      return (new Date().getTime() - lastUpdatedAt) <= ALIVE_TIME_IN_MILLIS;
-    }
-
-    /**
-     * Updates last time user hast made any interaction with server.
-     */
-    public void keepAlive(){
-      this.lastUpdatedAt = new Date().getTime();
-    }
-
-    public UserIdentifier(Class version, String uci, String name) {
-      this.version = version;
-      this.uci = uci;
-      this.name = name;
-      this.room = "";
-      this.lastUpdatedAt = new Date().getTime();
-    }
-
-    public UserIdentifier(Class version, String uci, String name, String room) {
-      this.version = version;
-      this.uci = uci;
-      this.name = name;
-      this.room = room;
-      this.lastUpdatedAt = new Date().getTime();
-    }
-
-    public Class getVersion() {
-      return version;
-    }
-
-    public void setVersion(Class version) {
-      this.version = version;
-    }
-
-    public String getUci() {
-      return uci;
-    }
-
-    public void setUci(String uci) {
-      this.uci = uci;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public void setName(String name) {
-      this.name = name;
-    }
-
-    public String getRoom() {
-      return room;
-    }
-
-    public void setRoom(String room) {
-      this.room = room;
-    }
-  }
-
-  public class Bag {
-    private String uci;
-    private ChatData chatData;
-    private Class version;
-
-    public Bag(final String uci, final ChatData chatData, final Class version) {
-      this.uci = uci;
-      this.chatData = chatData;
-      this.version = version;
-    }
-
-    public String getUci() {
-      return uci;
-    }
-
-    public void setUci(String uci) {
-      this.uci = uci;
-    }
-
-    public ChatData getChatData() {
-      return chatData;
-    }
-
-    public void setChatData(ChatData chatData) {
-      this.chatData = chatData;
-    }
-
-    public Class getVersion() {
-      return version;
-    }
-
-    public void setVersion(Class version) {
-      this.version = version;
-    }
-  }
-
-  private void processChatData(final Class clazz, final String uci, final ChatData request){
-
-  }
-
   /**
    *
    * @param clazz a Class version instance.
@@ -228,42 +95,36 @@ public class ChatApplication implements Application {
    * @param data a ChatData data instance.
    * @throws Exception
    */
-  private void processCommand(final Class clazz, final String uci, final ChatData data)
-      throws Exception {
+  private List<Bag> processCommand(final Class clazz, final String uci, final ChatData data)
+      throws UserOwnerOfAnotherRoomException, RoomAlreadyExistsException,
+      UserConnectedToAnotherRoomException, UserNotConnectedException, RoomNotFoundException,
+      UserDoesNotBelongToAnyRoomException, DistinctRoomException {
+
     switch (data.getCmd()) {
       case ChatCommands.CONNECT:
-        connect(clazz, uci, data);
-        break;
+        return connect(clazz, uci, data);
       case ChatCommands.CREATE_ROOM:
-        createRoom(clazz, uci, data);
-        break;
+        return createRoom(clazz, uci, data);
       case ChatCommands.DISCONNECT:
-        disconnect(clazz, uci, data);
-        break;
+        return disconnect(clazz, uci, data);
       case ChatCommands.JOIN_ROOM:
-        join(clazz, uci, data);
-        break;
+        return join(clazz, uci, data);
       case ChatCommands.KEEP_ALIVE:
-        keepAlive(clazz, uci, data);
-        break;
+        return keepAlive(clazz, uci, data);
       case ChatCommands.LEAVE_ROOM:
-        leaveRoom(clazz, uci, data);
-        break;
+        return leaveRoom(clazz, uci, data);
       case ChatCommands.SEND_SUR:
-        sendMessageToSpecificUserInRoom(clazz, uci, data);
-        break;
+        return sendMessageToSpecificUserInRoom(clazz, uci, data);
       case ChatCommands.SEND_BUR:
-        sendMessageToAllUsersInRoom(clazz, uci, data);
-        break;
+        return sendMessageToAllUsersInRoom(clazz, uci, data);
       case ChatCommands.SEND_SGU:
-        sendMessageToSpecificUser(clazz, uci, data);
-        break;
+        return sendMessageToSpecificUser(clazz, uci, data);
       case ChatCommands.SEND_BGU:
-        sendMessageToAllUsers(clazz, uci, data);
-        break;
+        return sendMessageToAllUsers(clazz, uci, data);
       case ChatCommands.USERS_ROOM:
-        break;
+        return retrieveUsersFromRoom(clazz, uci, data);
     }
+    throw new IllegalStateException("Something wrong happened.");
   }
 
   /**
@@ -273,7 +134,7 @@ public class ChatApplication implements Application {
    * @param uci a String Unique Connection Identifier.
    * @param data a ChatData data instance.
    */
-  private void connect(final Class clazz, final String uci, final ChatData data) {
+  private List<Bag> connect(final Class clazz, final String uci, final ChatData data) {
     boolean found = false;
     final ListIterator<UserIdentifier> listIterator = userIdentifiers.listIterator();
     while (listIterator.hasNext()) {
@@ -286,6 +147,11 @@ public class ChatApplication implements Application {
     if(!found) {
       userIdentifiers.add(new UserIdentifier(clazz, uci, data.getFrom()));
     }
+
+    final List<Bag> responseList = new LinkedList<>();
+    responseList.add(createDirectResponse(clazz, uci, data.getFrom(), data.getCmd(),
+        ChatCommands.ResponseCode.OK, "You are now connected to the server."));
+    return responseList;
   }
 
   /**
@@ -297,19 +163,40 @@ public class ChatApplication implements Application {
    * @param uci a String Unique Connection Identifier.
    * @param data a ChatData data instance.
    */
-  private void disconnect(final Class clazz, final String uci, final ChatData data) {
-    try {
-      leaveRoom(clazz, uci, data);
-    } catch (RoomNotFoundException e) {
-      e.printStackTrace();
-    } catch (UserConnectedToAnotherRoomException e) {
-      e.printStackTrace();
-    } catch (UserNotConnectedException e) {
-      e.printStackTrace();
-    } catch (UserDoesNotBelongToAnyRoomException e) {
-      e.printStackTrace();
+  private List<Bag> disconnect(final Class clazz, final String uci, final ChatData data)
+      throws UserDoesNotBelongToAnyRoomException, UserConnectedToAnotherRoomException,
+      UserNotConnectedException, RoomNotFoundException {
+
+    final List<Bag> responseBags = new LinkedList<>();
+    boolean found = false;
+    final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
+    while (iterator.hasNext()) {
+      final UserIdentifier user = iterator.next();
+      if(user.getName().equals(data.getFrom())) {
+        found = true;
+        final String room = user.getRoom();
+        if(!StringUtils.isBlank(room)) {
+          if(!rooms.containsKey(room)) {
+            throw new IllegalStateException("An inconsistency was found in room properties.");
+          }
+          final ChatData chatData = new ChatData(data);
+          chatData.setMsg(room);
+          responseBags.addAll(leaveRoom(clazz, uci, chatData));
+        }
+        iterator.remove();
+        break;
+      }
     }
-    // TODO: notify user and disconnect it.
+
+    if(!found) {
+      throw new UserNotConnectedException(uci, data.getFrom(), "User " + data.getFrom() + " is " +
+          "not connected to the server.");
+    }
+
+    responseBags.add(createDirectResponse(clazz, uci, data.getFrom(), data.getCmd(),
+        ChatCommands.ResponseCode.OK, "User " + data.getFrom() + " successfully disconnected."));
+
+    return responseBags;
   }
 
   /**
@@ -321,31 +208,42 @@ public class ChatApplication implements Application {
    * @throws Exception if room does not exist, if user is connected to another room, if user is
    * not connected to the server.
    */
-  private void join(final Class clazz, final String uci, final ChatData data)
+  private List<Bag> join(final Class clazz, final String uci, final ChatData data)
       throws RoomNotFoundException, UserConnectedToAnotherRoomException, UserNotConnectedException {
     final UserIdentifier updatedUserIdentifier = new UserIdentifier(clazz, uci, data.getFrom(),
         data.getMsg());
 
+    final List<Bag> responseBags = new ArrayList<>();
+
     if(!rooms.containsKey(data.getMsg())) {
-      throw new RoomNotFoundException(data.getMsg());
+      throw new RoomNotFoundException(data.getMsg(), "The " + data.getMsg() + " room was not found.");
     }
 
     boolean found = false;
     final ListIterator<UserIdentifier> listIterator = userIdentifiers.listIterator();
     while (listIterator.hasNext()) {
       final UserIdentifier userIdentifier = listIterator.next();
-      if(!StringUtils.isBlank(userIdentifier.getRoom())) {
-        throw new UserConnectedToAnotherRoomException(uci, data.getFrom(),
-            userIdentifier.getRoom(), data.getMsg());
-      }
       if(userIdentifier.getName().equals(data.getFrom())) {
+        if(!StringUtils.isBlank(userIdentifier.getRoom())) {
+          throw new UserConnectedToAnotherRoomException(uci, data.getFrom(),
+              userIdentifier.getRoom(), data.getMsg(),
+              "User " + userIdentifier.getName() + " is connected to another room " +
+                  userIdentifier.getRoom());
+        }
         listIterator.set(updatedUserIdentifier);
         found = true;
       }
     }
     if(!found) {
-      throw new UserNotConnectedException(uci, data.getFrom());
+      throw new UserNotConnectedException(uci, data.getFrom(),
+          "User " + data.getFrom() + " is not connected to the server.");
     }
+
+    responseBags.add(createDirectResponse(clazz, uci, data.getFrom(), data.getCmd(),
+        ChatCommands.ResponseCode.OK, "User " + data.getFrom()
+            + " has successfully joined the room " + data.getMsg() + "."));
+
+    return responseBags;
   }
 
   /**
@@ -357,12 +255,15 @@ public class ChatApplication implements Application {
    * @throws Exception if room does not exist, if user is not in the room he is trying to leave,
    * if user is not connected.
    */
-  private void leaveRoom(final Class clazz, final String uci, final ChatData data)
+  private List<Bag> leaveRoom(final Class clazz, final String uci, final ChatData data)
       throws RoomNotFoundException, UserConnectedToAnotherRoomException, UserNotConnectedException,
       UserDoesNotBelongToAnyRoomException {
 
+    final List<Bag> responseBags = new LinkedList<>();
+
     if(!rooms.containsKey(data.getMsg())) {
-      throw new RoomNotFoundException(data.getMsg());
+      throw new RoomNotFoundException(data.getMsg(),
+          "The " + data.getMsg() + " room was not found.");
     }
 
     // rooms.key : room name
@@ -378,41 +279,61 @@ public class ChatApplication implements Application {
             if(room.equals(userIdentifier.getRoom())) {
               userIdentifier.setRoom("");
               listIterator.set(userIdentifier);
-              //TODO: notify user that room owner has disconnected from room
+
+              // notifying me and others
+              responseBags.add(createDirectResponse(clazz, userIdentifier.getUci(), userIdentifier.getName(),
+                  ChatCommands.LEAVE_ROOM, ChatCommands.ResponseCode.OK,
+                  "User " + userIdentifier.getName() + " was removed from room " + data.getMsg()));
             }
           }
 
           rooms.remove(room);
           LOGGER.info("Everyone leaves the room because I'm owner.");
-          return;
+          return responseBags;
         } else {
           // I'm owner of a room and I'm trying to leave another room. I'm can only be in one
           // room at a time.
-          throw new IllegalStateException("An inconsistency was found in room properties");
+          throw new IllegalStateException("An inconsistency was found in room properties.");
         }
       }
     }
 
     boolean found = false;
+    // when I'm not room's owner.
     final ListIterator<UserIdentifier> listIterator = userIdentifiers.listIterator();
     while (listIterator.hasNext()) {
       final UserIdentifier userIdentifier = listIterator.next();
       if(userIdentifier.getName().equals(data.getFrom())) {
         if(StringUtils.isBlank(userIdentifier.getRoom())) {
-          throw new UserDoesNotBelongToAnyRoomException(uci, data.getFrom(), data.getMsg());
+          throw new UserDoesNotBelongToAnyRoomException(uci, data.getFrom(), data.getMsg(),
+              "User " + userIdentifier.getName() + " does not belong to any room.");
         }
         if(!data.getMsg().equals(userIdentifier.getRoom())) {
           throw new UserConnectedToAnotherRoomException(uci, data.getFrom(),
-              userIdentifier.getRoom(), data.getMsg());
+              userIdentifier.getRoom(), data.getMsg(),
+              "User " + userIdentifier.getName() + " is connected to another room " +
+                  userIdentifier.getRoom());
         }
         userIdentifier.setRoom("");
         listIterator.set(userIdentifier);
         found = true;
+
+        // notifying me about leaving room
+        responseBags.add(0, createDirectResponse(clazz, uci, userIdentifier.getName(),
+            ChatCommands.LEAVE_ROOM, ChatCommands.ResponseCode.OK,
+            "User " + userIdentifier.getName() + " was removed from room " + data.getMsg()));
+      } else {
+        responseBags.add(createDirectResponse(clazz, userIdentifier.getUci(), userIdentifier.getName(),
+            ChatCommands.LEAVE_ROOM, ChatCommands.ResponseCode.OK,
+            "User " + data.getFrom() + " left the room " + data.getMsg()));
       }
     }
-    if(!found) {
-      throw new UserNotConnectedException(uci, data.getFrom());
+    if(found) {
+      return responseBags;
     }
+
+    throw new UserNotConnectedException(uci, data.getFrom(),
+        "User " + data.getFrom() + " is not connected to the server.");
   }
 
   /**
@@ -423,7 +344,7 @@ public class ChatApplication implements Application {
    * @param data a ChatData data instance.
    * @throws Exception if user is not connected.
    */
-  private void keepAlive(final Class clazz, final String uci, final ChatData data)
+  private List<Bag> keepAlive(final Class clazz, final String uci, final ChatData data)
       throws UserNotConnectedException {
     boolean found = false;
     final ListIterator<UserIdentifier> listIterator = userIdentifiers.listIterator();
@@ -432,7 +353,7 @@ public class ChatApplication implements Application {
       if(userIdentifier.getName().equals(data.getFrom())) {
         if(!userIdentifier.isActive()) {
           // TODO: notify user and disconnect
-          return;
+          return null;
         }
         userIdentifier.keepAlive();
         listIterator.set(userIdentifier);
@@ -440,8 +361,11 @@ public class ChatApplication implements Application {
       }
     }
     if(!found) {
-      throw new UserNotConnectedException(uci, data.getFrom());
+      throw new UserNotConnectedException(uci, data.getFrom(),
+          "User " + data.getFrom() + " is not connected to the server.");
     }
+
+    return null;
   }
 
   /**
@@ -454,17 +378,20 @@ public class ChatApplication implements Application {
    * @throws Exception if room already exists, if user is already connected to another room, if
    * user is trying to create a room and is not connected.
    */
-  private void createRoom(final Class clazz, final String uci, final ChatData data)
+  private List<Bag> createRoom(final Class clazz, final String uci, final ChatData data)
       throws RoomAlreadyExistsException, UserOwnerOfAnotherRoomException,
       UserConnectedToAnotherRoomException, UserNotConnectedException {
 
     if(rooms.containsKey(data.getMsg())) {
-      throw new RoomAlreadyExistsException(data.getMsg());
+      throw new RoomAlreadyExistsException(data.getMsg(),
+          "The room " + data.getMsg() + " already exists.");
     }
 
     for(Map.Entry<String, String> entry : rooms.entrySet()) {
       if(entry.getValue().equals(data.getFrom())) {
-        throw new UserOwnerOfAnotherRoomException(uci, data.getFrom(), entry.getKey(), data.getMsg());
+        throw new UserOwnerOfAnotherRoomException(uci, data.getFrom(), entry.getKey(),
+            data.getMsg(), "The user " + data.getFrom() + " is owner of another room "
+            + entry.getKey() + ".");
       }
     }
 
@@ -479,7 +406,8 @@ public class ChatApplication implements Application {
                 "that does not exist.");
           }
           throw new UserConnectedToAnotherRoomException(uci, data.getFrom(), userIdentifier.getRoom(),
-              data.getMsg());
+              data.getMsg(), "The user " + data.getFrom() + " is connected to another room " +
+              userIdentifier.getRoom() + ".");
         }
         userIdentifier.keepAlive();
         userIdentifier.setRoom(data.getMsg());
@@ -488,10 +416,17 @@ public class ChatApplication implements Application {
       }
     }
     if(!found) {
-      throw new UserNotConnectedException(uci, data.getFrom());
+      throw new UserNotConnectedException(uci, data.getFrom(),
+          "User " + data.getFrom() + " is not connected to the server.");
     }
 
     rooms.put(data.getMsg(), data.getFrom());
+
+    final List<Bag> responseBags = new LinkedList<>();
+    responseBags.add(createDirectResponse(clazz, uci, data.getFrom(), data.getCmd(),
+        ChatCommands.ResponseCode.OK, "Room " + data.getMsg() + " successfully created."));
+
+    return responseBags;
   }
 
   /**
@@ -505,10 +440,12 @@ public class ChatApplication implements Application {
    * @throws Exception if sender is not connected to the server, if sender room does not exist, if
    * destination is not connected to the server, if destination is not in the same room as sender.
    */
-  private Object sendMessageToSpecificUserInRoom(
+  private List<Bag> sendMessageToSpecificUserInRoom(
       final Class clazz,
       final String uci,
       final ChatData data) throws RoomNotFoundException, UserNotConnectedException, DistinctRoomException {
+    final List<Bag> responseBags = new LinkedList<>();
+
     final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
     UserIdentifier sender = null;
     UserIdentifier destination = null;
@@ -522,20 +459,27 @@ public class ChatApplication implements Application {
       }
     }
     if(null == sender) {
-      throw new UserNotConnectedException(uci, data.getFrom(), "Sender user not connected.");
+      throw new UserNotConnectedException(uci, data.getFrom(),
+          "Sender user " + data.getFrom() + " is not connected to the server.");
     }
     if(null == destination) {
-      throw new UserNotConnectedException(uci, data.getFrom(), "Destination user not connected.");
+      throw new UserNotConnectedException(uci, data.getFrom(),
+          "Destination user " + data.getFrom() + " is not connected to the server.");
     }
     if(!rooms.containsKey(sender.getRoom())) {
-      throw new RoomNotFoundException(sender.getRoom());
+      throw new RoomNotFoundException(sender.getRoom(), "The " + sender.getRoom()
+          + " room was not found.");
     }
     if(!sender.getRoom().equals(destination.getRoom())) {
-      throw new DistinctRoomException(sender.getRoom(), destination.getRoom());
+      throw new DistinctRoomException(sender.getRoom(), destination.getRoom(),
+          "The recipient user is not in this room.");
     }
 
-    // TODO: return correct data
-    return null;
+    responseBags.add(createDirectResponse(clazz, uci, data.getFrom(), data.getCmd(),
+        ChatCommands.ResponseCode.OK, "Message successfully sent to user " + data.getTo()));
+    responseBags.add(new Bag(destination.getUci(), new ChatData(data), destination.getVersion()));
+
+    return responseBags;
   }
 
   /**
@@ -548,7 +492,7 @@ public class ChatApplication implements Application {
    * @throws Exception if sender is not connected to the server, if sender room does not exist,
    * if sender is not in the room he is trying to send a message to.
    */
-  private Object sendMessageToAllUsersInRoom(
+  private List<Bag> sendMessageToAllUsersInRoom(
       final Class clazz,
       final String uci,
       final ChatData data) throws UserNotConnectedException, RoomNotFoundException, DistinctRoomException {
@@ -561,13 +505,16 @@ public class ChatApplication implements Application {
       }
     }
     if(null == sender) {
-      throw new UserNotConnectedException(uci, data.getFrom(), "Sender user not connected.");
+      throw new UserNotConnectedException(uci, data.getFrom(),
+          "Sender user " + data.getFrom() + " is not connected to the server.");
     }
     if(!rooms.containsKey(sender.getRoom())) {
-      throw new RoomNotFoundException(sender.getRoom());
+      throw new RoomNotFoundException(sender.getRoom(), "The " + sender.getRoom() + " room was not " +
+          "found.");
     }
     if(!sender.getRoom().equals(data.getTo())) {
-      throw new DistinctRoomException(sender.getRoom(), data.getTo());
+      throw new DistinctRoomException(sender.getRoom(), data.getTo(),
+          "User is trying to send a message to a different room.");
     }
 
     // TODO: iterate over all users and build the correct data to send back
@@ -584,7 +531,7 @@ public class ChatApplication implements Application {
    * @throws Exception if sender is not connected to the server, if destination is not connected
    * to the server.
    */
-  private Object sendMessageToSpecificUser(final Class clazz, final String uci, final ChatData
+  private List<Bag> sendMessageToSpecificUser(final Class clazz, final String uci, final ChatData
       data) throws UserNotConnectedException {
     final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
     UserIdentifier sender = null;
@@ -599,10 +546,12 @@ public class ChatApplication implements Application {
       }
     }
     if(null == sender) {
-      throw new UserNotConnectedException(uci, data.getFrom(), "Sender user not connected.");
+      throw new UserNotConnectedException(uci, data.getFrom(),
+          "Sender user " + data.getFrom() + " is not connected to the server.");
     }
     if(null == destination) {
-      throw new UserNotConnectedException(uci, data.getFrom(), "Destination user not connected.");
+      throw new UserNotConnectedException(uci, data.getFrom(),
+          "Destination user " + data.getFrom() + " is not connected to the server.");
     }
 
     // TODO: build correct data to send back
@@ -617,7 +566,7 @@ public class ChatApplication implements Application {
    * @param data a ChatData data instance.
    * @throws Exception if sender is not connected to the server.
    */
-  private Object sendMessageToAllUsers(final Class clazz, final String uci, final ChatData data)
+  private List<Bag> sendMessageToAllUsers(final Class clazz, final String uci, final ChatData data)
       throws UserNotConnectedException {
     final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
     UserIdentifier sender = null;
@@ -628,11 +577,183 @@ public class ChatApplication implements Application {
       }
     }
     if(null == sender) {
-      throw new UserNotConnectedException(uci, data.getFrom(), "Sender user not connected.");
+      throw new UserNotConnectedException(uci, data.getFrom(),
+          "Sender user " + data.getFrom() + " is not connected to the server.");
     }
 
     // TODO: iterate over all users and build the correct data to send back
     return null;
+  }
+
+  /**
+   * Retrieve all users from a specific room. User should be in the same room as he is trying to
+   * retrieve this information.
+   *
+   * @param clazz a Class version instance.
+   * @param uci a String Unique Connection Identifier.
+   * @param data a ChatData data instance.
+   * @return
+   * @throws Exception if room does not exists, if user is not connected, if user is not in the
+   * same room as he is trying to retrieve data.
+   */
+  private List<Bag> retrieveUsersFromRoom(Class clazz, String uci, ChatData data) throws RoomNotFoundException {
+    final List<Bag> responseBags = new LinkedList<>();
+    final List<String> userNames = new LinkedList<>();
+
+    if(!rooms.containsKey(data.getMsg())) {
+      throw new RoomNotFoundException(data.getMsg(), "The " + data.getMsg() + " room was not found.");
+    }
+
+    //TODO: check other conditions please
+
+    final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
+    while(iterator.hasNext()) {
+      final UserIdentifier user = iterator.next();
+      if(data.getMsg().equals(user.getRoom())) {
+        userNames.add(user.getName());
+      }
+    }
+
+    responseBags.add(createDirectResponse(clazz, uci, data.getFrom(), data.getCmd(),
+        ChatCommands.ResponseCode.OK, new Gson().toJson(userNames)));
+
+    return responseBags;
+  }
+
+  /**
+   * Creates a direct response from server. The response is for a specific command and can be of
+   * success or error. A status message should be send as well.
+   *
+   * @param clazz a Class version instance.
+   * @param uci a String Unique Connection Identifier.
+   * @param userTo a String representing the user recipient.
+   * @param command a String representing the command.
+   * @param status a ChatCommands.ResponseCode status.
+   * @param message a String representing a status message.
+   * @return a Bag response containing a response from server.
+   */
+  private Bag createDirectResponse(
+      final Class clazz,
+      final String uci,
+      final String userTo,
+      final String command,
+      final String status,
+      final String message) {
+
+    final ChatData responseData = new ChatData("server", userTo, command +
+        status, message == null ? "" : message);
+
+    return new Bag(uci, responseData, clazz);
+  }
+
+
+  private List<Bag> createResponse(final Class clazz, final String uci, final ChatData data,
+                                   final String status) {
+
+    final List<Bag> response = new LinkedList<>();
+    final ChatData responseData = new ChatData(data.getTo(), data.getFrom(), data.getCmd() + status, "" );
+
+    switch (data.getCmd()) {
+      case ChatCommands.CONNECT: {
+
+        if (ChatCommands.ResponseCode.OK.equals(status)) {
+          responseData.setMsg("ok");
+        } else if (ChatCommands.ResponseCode.ERROR.equals(status)) {
+          responseData.setMsg("error");
+        }
+        final Bag bag = new Bag(uci, responseData, clazz);
+        response.add(bag);
+        break;
+      }
+      case ChatCommands.CREATE_ROOM: {
+        if (ChatCommands.ResponseCode.OK.equals(status)) {
+          responseData.setMsg("room " + data.getMsg() + " successfully created.");
+        } else if (ChatCommands.ResponseCode.ERROR.equals(status)) {
+          responseData.setMsg("error while creating room " + data.getMsg());
+        }
+        final Bag bag = new Bag(uci, responseData, clazz);
+        response.add(bag);
+        break;
+      }
+      case ChatCommands.DISCONNECT: {
+
+
+
+
+
+        //TODO
+        if (ChatCommands.ResponseCode.OK.equals(status)) {
+          responseData.setMsg("room " + data.getMsg() + " successfully created.");
+        } else if (ChatCommands.ResponseCode.ERROR.equals(status)) {
+          responseData.setMsg("error while creating room " + data.getMsg());
+        }
+        final Bag bag = new Bag(uci, responseData, clazz);
+        response.add(bag);
+        break;
+
+
+
+
+
+      }
+      case ChatCommands.JOIN_ROOM:
+        if(ChatCommands.ResponseCode.OK.equals(status)) {
+
+        } else if (ChatCommands.ResponseCode.ERROR.equals(status)) {
+
+        }
+        break;
+      case ChatCommands.KEEP_ALIVE:
+        if(ChatCommands.ResponseCode.OK.equals(status)) {
+
+        } else if (ChatCommands.ResponseCode.ERROR.equals(status)) {
+
+        }
+        break;
+      case ChatCommands.LEAVE_ROOM:
+        if(ChatCommands.ResponseCode.OK.equals(status)) {
+
+        } else if (ChatCommands.ResponseCode.ERROR.equals(status)) {
+
+        }
+        break;
+      case ChatCommands.SEND_SUR:
+        if(ChatCommands.ResponseCode.OK.equals(status)) {
+
+        } else if (ChatCommands.ResponseCode.ERROR.equals(status)) {
+
+        }
+        break;
+      case ChatCommands.SEND_BUR:
+        if(ChatCommands.ResponseCode.OK.equals(status)) {
+
+        } else if (ChatCommands.ResponseCode.ERROR.equals(status)) {
+
+        }
+        break;
+      case ChatCommands.SEND_SGU:
+        if(ChatCommands.ResponseCode.OK.equals(status)) {
+
+        } else if (ChatCommands.ResponseCode.ERROR.equals(status)) {
+
+        }
+        break;
+      case ChatCommands.SEND_BGU:
+        if(ChatCommands.ResponseCode.OK.equals(status)) {
+
+        } else if (ChatCommands.ResponseCode.ERROR.equals(status)) {
+
+        }
+        break;
+      case ChatCommands.USERS_ROOM:
+        //TODO
+        break;
+    }
+
+
+
+    return response;
+
   }
 
 }

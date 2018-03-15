@@ -15,4 +15,12 @@ public class UserNotConnectedException extends Exception {
     this.uci = uci;
     this.user = user;
   }
+
+  public String getUci() {
+    return uci;
+  }
+
+  public String getUser() {
+    return user;
+  }
 }
