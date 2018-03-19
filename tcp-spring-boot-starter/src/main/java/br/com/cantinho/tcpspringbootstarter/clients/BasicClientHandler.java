@@ -19,4 +19,9 @@ public class BasicClientHandler extends ClientHandler implements Transmitter {
     super.send(uci, parameters);
   }
 
+  @Override
+  public void close(final String uci, final Object... parameters) {
+    super.close(uci, parameters);
+  }
+
 }

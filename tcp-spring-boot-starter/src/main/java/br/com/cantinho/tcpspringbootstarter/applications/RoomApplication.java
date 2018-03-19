@@ -60,12 +60,13 @@ public class RoomApplication implements Application {
   }
 
   @Override
-  public void onConnect(String uci) {
+  public Object onConnect(String uci) {
     LOGGER.debug("onConnect:{}", uci);
+    return new Object();
   }
 
   @Override
-  public void onDisconnect(final String uci) {
+  public Object onDisconnect(final String uci) {
     final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
     while(iterator.hasNext()) {
       final UserIdentifier userIdentifier = iterator.next();
@@ -74,6 +75,7 @@ public class RoomApplication implements Application {
       }
     }
     LOGGER.debug("onDisconnect:{}", uci);
+    return new Object();
   }
 
   private class UserIdentifier{

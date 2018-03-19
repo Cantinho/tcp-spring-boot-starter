@@ -169,6 +169,9 @@ public final class ConnectionHandler implements TcpConnection, Runnable {
     LOGGER.debug("close");
     try {
       clientSocket.close();
+      input.close();
+      output.close();
+      LOGGER.debug("client socket was closed");
     } catch (IOException ioe) {
       LOGGER.error("Could not close TcpConnection for socket " + clientSocket, ioe);
     }

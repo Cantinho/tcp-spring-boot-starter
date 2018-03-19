@@ -4,7 +4,7 @@ public interface Application {
 
   Object process(final Object... parameters);
 
-  void onConnect(final String uci);
+  Object onConnect(final String uci);
 
-  void onDisconnect(final String uci);
+  Object onDisconnect(final String uci);
 }

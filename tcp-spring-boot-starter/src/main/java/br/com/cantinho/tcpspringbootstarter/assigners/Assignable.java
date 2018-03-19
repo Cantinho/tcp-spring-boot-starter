@@ -23,26 +23,17 @@ public abstract class Assignable {
    * Clients.
    */
   private final Transmitter transmitter;
-
-  /**
-   * Application.
-   */
-  final Application application;
-
+  
   /**
    * Connected clients UCI.
    */
   private final Set<String> connectedClients = Collections.synchronizedSet(new HashSet<>());
 
-  public Assignable(final Transmitter transmitter, final Application application) throws
+  public Assignable(final Transmitter transmitter) throws
       AssignableException {
     if(null == transmitter) {
       throw new AssignableException("Transmitter can't be null.");
     }
-    if(null == application) {
-      throw new AssignableException("Application can't be null.");
-    }
-    this.application = application;
     this.transmitter = transmitter;
   }
 
@@ -54,7 +45,13 @@ public abstract class Assignable {
         throw new AssignableException("Couldn't find connected client with the given UCI " + uci);
       }
     }
+  }
 
+  public void close(final String uci, final Object... parameters) {
+    synchronized (connectedClients) {
+      connectedClients.remove(uci);
+      transmitter.close(uci, parameters);
+    }
   }
 
   /**
@@ -82,13 +79,13 @@ public abstract class Assignable {
 
   public void onConnect(final String uci) {
     LOGGER.trace("onConnect::uci:{}", uci);
-    application.onConnect(uci);
+    connectedClients.add(uci);
   }
 
   public void onDisconnect(final String uci) {
     boolean success = connectedClients.remove(uci);
     LOGGER.trace("onDisconnect::uci:{}:status:{}", uci, success);
-    application.onDisconnect(uci);
+    connectedClients.remove(uci);
   }
 
   /**
@@ -97,9 +94,7 @@ public abstract class Assignable {
    * @param parameters
    */
   public void assign(Object... parameters) {
-    final String uci = (String) parameters[0];
-    boolean success = connectedClients.add(uci);
-    LOGGER.trace("assign::uci:{}:notAlreadyExist:{}", uci, success);
+    LOGGER.trace("assign");
   }
 
   /**

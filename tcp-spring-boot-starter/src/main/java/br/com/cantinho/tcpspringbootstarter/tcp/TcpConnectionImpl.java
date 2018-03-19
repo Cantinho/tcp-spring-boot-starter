@@ -135,6 +135,9 @@ public class TcpConnectionImpl implements TcpConnection {
   public void close() {
     try {
       socket.close();
+      input.close();
+      output.close();
+      LOGGER.debug("client socket was closed");
     } catch (IOException ioe) {
       LOGGER.error("Could not close TcpConnection for socket " + socket, ioe);
     }
