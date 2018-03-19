@@ -80,6 +80,8 @@ public class ClientImpl implements Client {
   @Value("${keystore.pass}")
   private String pass;
 
+  boolean connected;
+
   /**
    * A start point for client.
    */
@@ -94,12 +96,14 @@ public class ClientImpl implements Client {
   /**
    * Listens for user inputs to send to a server in a secure socket communication.
    */
+  SSLSocket sslSocket;
   private void runSecureCommunication(){
     try {
-      final SSLSocket sslSocket = getSSLSocket();
+      sslSocket = getSSLSocket();
       final OutputStream outputStream = sslSocket.getOutputStream();
       final InputStream inputStream = sslSocket.getInputStream();
       sslSocket.startHandshake();
+      connected = true;
 
       //TODO: select correct client runner
       //runRoomClient(outputStream);
@@ -217,7 +221,7 @@ public class ClientImpl implements Client {
     new Thread(() -> {
       System.out.print("[client] client name: ");
       final String client = new Scanner(System.in).nextLine();
-      while (true == true) {
+      while (connected) {
         try {
           final String data = "v1";
           System.out.print("[client] command (uppercase): ");
@@ -246,6 +250,7 @@ public class ClientImpl implements Client {
           }
 
         } catch (IOException exc) {
+          connected = false;
           LOGGER.error("[error]: {}", exc.getMessage());
         }
       }
@@ -257,11 +262,16 @@ public class ClientImpl implements Client {
       final byte[] buffer = new byte[BUFFER_SIZE];
       int size = 0;
       try{
-        while ((size = inputStream.read(buffer)) >= 0) {
+        while (connected && (size = inputStream.read(buffer)) >= 0) {
           final byte[] response = Arrays.copyOfRange(buffer, 0, size);
+          final String responseStr = new String(response);
+          if(responseStr.contains("DISCONNECT_OK")) {
+            connected = false;
+          }
           System.out.println("[server]-> " + new String(response));
         }
       } catch (Exception exc) {
+        connected = false;
         LOGGER.error("[error]: {}", exc.getMessage());
       }
     }).start();

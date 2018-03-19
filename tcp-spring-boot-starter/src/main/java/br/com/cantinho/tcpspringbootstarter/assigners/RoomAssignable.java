@@ -32,6 +32,11 @@ public class RoomAssignable extends Assignable {
   private List<IConverter> converters;
 
   /**
+   * Application.
+   */
+  private Application application;;
+
+  /**
    * Builds an echo application passing a converter list as argument.
    *
    * @param converters
@@ -40,11 +45,12 @@ public class RoomAssignable extends Assignable {
   public RoomAssignable(final List<IConverter> converters, final Transmitter transmitter, final
   Application application) throws
       AssignableException {
-    super(transmitter, application);
+    super(transmitter);
     if(null == converters || converters.isEmpty()) {
       throw new AssignableException("It could not find a suitable converter.");
     }
     this.converters = converters;
+    this.application = application;
   }
 
   /**
@@ -76,6 +82,12 @@ public class RoomAssignable extends Assignable {
       }
     }
     throw new IllegalStateException("Unable to convert data. Fix this before production.");
+  }
+
+  @Override
+  public void onConnect(String uci) {
+    super.onConnect(uci);
+    application.onDisconnect(uci);
   }
 
   @Override

@@ -3,6 +3,7 @@ package br.com.cantinho.tcpspringbootstarter.assigners;
 import br.com.cantinho.tcpspringbootstarter.applications.Application;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.ChatApplication;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.domain.Bag;
+import br.com.cantinho.tcpspringbootstarter.applications.chat.domain.ChatCommands;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatData;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatDataConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.IConverter;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+import static br.com.cantinho.tcpspringbootstarter.applications.chat.domain.ChatCommands.DISCONNECT;
 import static br.com.cantinho.tcpspringbootstarter.data.DataHandler.compareVersion;
 import static br.com.cantinho.tcpspringbootstarter.data.DataHandler.getVersionable;
 
@@ -35,19 +37,24 @@ public class ChatAssignable extends Assignable {
   private List<IConverter> converters;
 
   /**
+   * Application.
+   */
+  private Application application;
+
+  /**
    * Builds an echo application passing a converter list as argument.
    *
    * @param converters
    * @throws AssignableException
    */
-  public ChatAssignable(final List<IConverter> converters, final Transmitter transmitter, final
-  Application application) throws
-      AssignableException {
-    super(transmitter, application);
+  public ChatAssignable(final List<IConverter> converters, final Transmitter transmitter,
+                        final Application application) throws AssignableException {
+    super(transmitter);
     if(null == converters || converters.isEmpty()) {
       throw new AssignableException("It could not find a suitable converter.");
     }
     this.converters = converters;
+    this.application = application;
   }
 
   /**
@@ -81,11 +88,6 @@ public class ChatAssignable extends Assignable {
     throw new IllegalStateException("Unable to convert data. Fix this before production.");
   }
 
-  @Override
-  public void onDisconnect(final String uci) {
-    super.onDisconnect(uci);
-    application.onDisconnect(uci);
-  }
 
   @Override
   public void assign(Object... parameters) {
@@ -104,7 +106,11 @@ public class ChatAssignable extends Assignable {
       final ChatData request = ChatDataConverter.jsonize(data);
       final List<Bag> bags = (List<Bag>) application.process(uci, clazz, request);
 
+      boolean selfDisconnectEvent = false;
       for(final Bag bag : bags) {
+        if(bag.getUci().equals(uci) && bag.getChatData().getCmd().startsWith(DISCONNECT)) {
+          selfDisconnectEvent = true;
+        }
         final Object objectData = ChatDataConverter.dejsonizeFrom(bag.getVersion(), bag.getChatData());
         final String jsonInString = mapper.writeValueAsString(objectData);
         try {
@@ -114,8 +120,42 @@ public class ChatAssignable extends Assignable {
         }
       }
 
+      if(selfDisconnectEvent) {
+        // close TCP connection
+        close(uci);
+      }
+
+
     } catch (Exception e) {
       LOGGER.error("Couldn't assign. Message: {}", e.getMessage());
+    }
+  }
+
+  @Override
+  public void onConnect(String uci) {
+    super.onConnect(uci);
+    application.onConnect(uci);
+  }
+
+  @Override
+  public void onDisconnect(String uci) {
+    super.onDisconnect(uci);
+    final List<Bag> bags = (List<Bag>) application.onDisconnect(uci);
+    final ObjectMapper mapper = new ObjectMapper();
+    for(final Bag bag : bags) {
+      final Object objectData;
+      try {
+        objectData = ChatDataConverter.dejsonizeFrom(bag.getVersion(), bag.getChatData());
+        final String jsonInString = mapper.writeValueAsString(objectData);
+        try {
+          send(bag.getUci(), jsonInString.getBytes());
+        } catch (AssignableException e) {
+          LOGGER.debug("Content not sent. Message: {}", e.getMessage());
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+
     }
   }
 

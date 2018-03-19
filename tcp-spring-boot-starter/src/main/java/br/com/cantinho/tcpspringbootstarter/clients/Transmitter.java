@@ -12,4 +12,12 @@ public interface Transmitter {
    * @param parameters
    */
   void send(final String uci, final Object... parameters);
+
+  /**
+   * Closes communication to client.
+   *
+   * @param uci
+   * @param parameters
+   */
+  void close(final String uci, final Object... parameters);
 }

@@ -16,21 +16,6 @@ public abstract class DataHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(DataHandler.class.getCanonicalName());
 
   /**
-   * Connect event.
-   */
-  public static final int CONNECT = 1;
-
-  /**
-   * Disconnect event.
-   */
-  public static final int DISCONNECT = 2;
-
-  /**
-   * Incoming data event.
-   */
-  public static final int DATA = 3;
-
-  /**
    * Assignables list.
    */
   private List<Assignable> assignables;

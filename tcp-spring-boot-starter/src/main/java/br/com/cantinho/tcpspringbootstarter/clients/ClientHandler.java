@@ -34,6 +34,7 @@ public abstract class ClientHandler implements Transmitter {
     return uci;
   }
 
+
   @Override
   public void send(final String uci, final Object... parameters) {
     LOGGER.debug("send {}", uci);
@@ -48,5 +49,22 @@ public abstract class ClientHandler implements Transmitter {
       LOGGER.error("tcp connection is null");
     }
   }
+
+  @Override
+  public void close(final String uci, final Object... parameters) {
+    LOGGER.debug("close {}", uci);
+    final TcpConnection tcpConnection = clients.get(uci);
+    if(null != tcpConnection) {
+      try {
+        tcpConnection.close();
+        LOGGER.error("close ok");
+      } catch (Exception exc) {
+        LOGGER.error("{}", exc.getMessage());
+      }
+    } else {
+      LOGGER.error("tcp connection is null");
+    }
+  }
+
 
 }

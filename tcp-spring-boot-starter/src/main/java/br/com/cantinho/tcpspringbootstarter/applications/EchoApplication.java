@@ -24,12 +24,14 @@ public class EchoApplication implements Application {
   }
 
   @Override
-  public void onConnect(String uci) {
+  public Object onConnect(String uci) {
     LOGGER.debug("onConnect:{}", uci);
+    return new Object();
   }
 
   @Override
-  public void onDisconnect(String uci) {
+  public Object onDisconnect(String uci) {
     LOGGER.debug("onDisconnect:{}", uci);
+    return new Object();
   }
 }

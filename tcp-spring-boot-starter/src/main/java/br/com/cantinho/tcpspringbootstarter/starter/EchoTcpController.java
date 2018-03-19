@@ -75,9 +75,6 @@ public class EchoTcpController {
         LOGGER.error("Fix data handler. {}", dhe);
       }
     }
-//    final String answer = new String(data);
-//    LOGGER.info("receiveData: " + answer);
-//    connection.send(answer.getBytes());
   }
 
   /**
