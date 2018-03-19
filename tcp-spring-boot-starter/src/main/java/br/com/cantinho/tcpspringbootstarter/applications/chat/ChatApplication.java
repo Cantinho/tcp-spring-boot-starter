@@ -64,7 +64,7 @@ public class ChatApplication implements Application {
         | RoomNotFoundException
         | DistinctRoomException
         | UserDoesNotBelongToAnyRoomException exc) {
-      exc.printStackTrace();
+      LOGGER.error("process: {}", exc.getMessage());
       responseBags.add(createDirectResponse(clazz, uci, request.getFrom(), request.getCmd(),
           ChatCommands.ResponseCode.ERROR, exc.getMessage()));
     }
@@ -346,14 +346,17 @@ public class ChatApplication implements Application {
    */
   private List<Bag> keepAlive(final Class clazz, final String uci, final ChatData data)
       throws UserNotConnectedException {
+    final List<Bag> responseBags = new LinkedList<>();
+
     boolean found = false;
     final ListIterator<UserIdentifier> listIterator = userIdentifiers.listIterator();
     while (listIterator.hasNext()) {
       final UserIdentifier userIdentifier = listIterator.next();
       if(userIdentifier.getName().equals(data.getFrom())) {
         if(!userIdentifier.isActive()) {
-          // TODO: notify user and disconnect
-          return null;
+          listIterator.remove();
+          throw new UserNotConnectedException(uci, data.getFrom(),
+              "User " + data.getFrom() + " is not connected to the server.");
         }
         userIdentifier.keepAlive();
         listIterator.set(userIdentifier);
@@ -365,7 +368,9 @@ public class ChatApplication implements Application {
           "User " + data.getFrom() + " is not connected to the server.");
     }
 
-    return null;
+    responseBags.add(createDirectResponse(clazz, uci, data.getFrom(), data.getCmd(),
+        ChatCommands.ResponseCode.OK, "Keep alive success for user " + data.getFrom() + "."));
+    return responseBags;
   }
 
   /**

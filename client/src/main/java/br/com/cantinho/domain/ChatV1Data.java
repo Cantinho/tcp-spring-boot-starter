@@ -2,7 +2,7 @@ package br.com.cantinho.domain;
 
 public class ChatV1Data extends Versionable {
 
-  protected static final String VERSION = ChatV1Data.class.getSimpleName();
+  protected static final String VERSION = "1.0";
 
   private String from;
   private String to;

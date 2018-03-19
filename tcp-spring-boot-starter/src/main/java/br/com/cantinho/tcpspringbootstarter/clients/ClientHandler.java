@@ -5,7 +5,6 @@ import br.com.cantinho.tcpspringbootstarter.utils.ClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,20 +23,20 @@ public abstract class ClientHandler implements Transmitter {
   public String onConnect(final TcpConnection tcpConnection) {
     final String uci = ClientUtils.generateUCI(tcpConnection);
     clients.put(uci, tcpConnection);
-    LOGGER.info("onConnect {}", uci);
+    LOGGER.debug("onConnect {}", uci);
     return uci;
   }
 
   public String onDisconnect(final TcpConnection tcpConnection) {
     final String uci = ClientUtils.generateUCI(tcpConnection);
     clients.remove(uci, tcpConnection);
-    LOGGER.info("onDisconnect {}", uci);
+    LOGGER.debug("onDisconnect {}", uci);
     return uci;
   }
 
   @Override
   public void send(final String uci, final Object... parameters) {
-    LOGGER.info("send {}", uci);
+    LOGGER.debug("send {}", uci);
     final TcpConnection tcpConnection = clients.get(uci);
     if(null != tcpConnection) {
       try {

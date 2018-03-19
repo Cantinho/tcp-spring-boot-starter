@@ -72,16 +72,16 @@ public final class ConnectionHandler implements TcpConnection, Runnable {
       throw new IllegalStateException("No server listener was registered.");
     }
 
-    LOGGER.info("run");
+    LOGGER.debug("run");
     while (true) {
       byte[] buffer = new byte[64 * 1024];
       try {
         int count = input.read(buffer);
-        LOGGER.info("read - data count:" + count);
+        LOGGER.debug("read - data count:" + count);
         if (count > 0) {
           byte[] bytes = Arrays.copyOf(buffer, count);
           for (final Listener listener : listeners) {
-            LOGGER.info("onMessageReceive:" + bytes.length + " bytes.");
+            LOGGER.debug("onMessageReceive:" + bytes.length + " bytes.");
             listener.onMessageReceived(this, bytes);
           }
         } else {
@@ -128,7 +128,7 @@ public final class ConnectionHandler implements TcpConnection, Runnable {
    */
   @Override
   public InetSocketAddress getSocketAddress() {
-    LOGGER.info("getSocketAddress");
+    LOGGER.debug("getSocketAddress");
     return (InetSocketAddress) clientSocket.getRemoteSocketAddress();
   }
 
@@ -139,7 +139,7 @@ public final class ConnectionHandler implements TcpConnection, Runnable {
    */
   @Override
   public void send(final Object objectToSend) {
-    LOGGER.info("send");
+    LOGGER.debug("send");
     if (objectToSend instanceof byte[]) {
       byte[] data = (byte[]) objectToSend;
       try {
@@ -152,15 +152,13 @@ public final class ConnectionHandler implements TcpConnection, Runnable {
 
   @Override
   public void addListener(final Listener listener) {
-    LOGGER.info("addListener");
+    LOGGER.debug("addListener");
     listeners.add(listener);
   }
 
-  ;
-
   @Override
   public void start() {
-    LOGGER.info("start");
+    LOGGER.debug("start");
   }
 
   /**
@@ -168,7 +166,7 @@ public final class ConnectionHandler implements TcpConnection, Runnable {
    */
   @Override
   public void close() {
-    LOGGER.info("close");
+    LOGGER.debug("close");
     try {
       clientSocket.close();
     } catch (IOException ioe) {

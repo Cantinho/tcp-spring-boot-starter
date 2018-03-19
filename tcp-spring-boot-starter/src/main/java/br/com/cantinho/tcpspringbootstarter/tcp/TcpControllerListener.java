@@ -76,7 +76,7 @@ public class TcpControllerListener implements TcpConnection.Listener {
    */
   @Override
   public void onClientConnected(final TcpConnection connection) {
-    LOGGER.info("onClientConnected");
+    LOGGER.debug("onClientConnected");
     for(final Method connectMethod : connectMethods) {
       try {
         connectMethod.invoke(bean, connection);
@@ -94,7 +94,7 @@ public class TcpControllerListener implements TcpConnection.Listener {
    */
   @Override
   public void onClientDisconnected(final TcpConnection connection) {
-    LOGGER.info("onClientDisconnected");
+    LOGGER.debug("onClientDisconnected");
     for(final Method disconnectedMethod : disconnectedMethods) {
       try {
         disconnectedMethod.invoke(bean, connection);

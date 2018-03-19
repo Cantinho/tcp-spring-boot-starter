@@ -105,21 +105,7 @@ public class ClientImpl implements Client {
       //runRoomClient(outputStream);
       runChatClient(outputStream);
 
-      new Thread(new Runnable() {
-        @Override
-        public void run() {
-          final byte[] buffer = new byte[BUFFER_SIZE];
-          int size = 0;
-          try{
-            while ((size = inputStream.read(buffer)) >= 0) {
-              final byte[] response = Arrays.copyOfRange(buffer, 0, size);
-              LOGGER.info("[client]: {}", new String(response));
-            }
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
-      }).start();
+      readServerResponse(inputStream);
 
     } catch (Exception exc) {
       LOGGER.error("[error]: {}", exc.getMessage());
@@ -151,7 +137,7 @@ public class ClientImpl implements Client {
         }
         final byte[] response = Arrays.copyOfRange(buffer, 0, size);
         SimpleMessage responseMessage = Utils.getMessageFromBytes(response);
-        LOGGER.info("[client]: {}", responseMessage);
+        System.out.print("[client]: " + responseMessage);
       }
 
     } catch (Exception exc) {
@@ -220,8 +206,8 @@ public class ClientImpl implements Client {
 
           outputStream.write(str.getBytes());
           outputStream.flush();
-        } catch (IOException e) {
-          e.printStackTrace();
+        } catch (IOException exc) {
+          LOGGER.error("[error]: {}", exc.getMessage());
         }
       }
     }).start();
@@ -234,7 +220,7 @@ public class ClientImpl implements Client {
       while (true == true) {
         try {
           final String data = "v1";
-          System.out.print("[client] command: ");
+          System.out.print("[client] command (uppercase): ");
           final String cmd = new Scanner(System.in).nextLine();
           System.out.print("[client] to: ");
           final String to = new Scanner(System.in).nextLine();
@@ -252,9 +238,31 @@ public class ClientImpl implements Client {
 
           outputStream.write(str.getBytes());
           outputStream.flush();
-        } catch (IOException e) {
-          e.printStackTrace();
+
+          try {
+            Thread.sleep(500);
+          } catch (InterruptedException exc) {
+            LOGGER.error("[error]: {}", exc.getMessage());
+          }
+
+        } catch (IOException exc) {
+          LOGGER.error("[error]: {}", exc.getMessage());
         }
+      }
+    }).start();
+  }
+
+  private void readServerResponse(final InputStream inputStream) {
+    new Thread(() -> {
+      final byte[] buffer = new byte[BUFFER_SIZE];
+      int size = 0;
+      try{
+        while ((size = inputStream.read(buffer)) >= 0) {
+          final byte[] response = Arrays.copyOfRange(buffer, 0, size);
+          System.out.println("[server]-> " + new String(response));
+        }
+      } catch (Exception exc) {
+        LOGGER.error("[error]: {}", exc.getMessage());
       }
     }).start();
   }

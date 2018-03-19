@@ -167,11 +167,11 @@ public class SecureTcpThreadPoolServer extends Thread implements TcpServer, TcpC
       try {
         // Accept the next incoming connection
         final Socket clientSocket = this.serverSocket.accept();
-        LOGGER.info("Accepted connection from " + clientSocket.getRemoteSocketAddress());
+        LOGGER.debug("Accepted connection from " + clientSocket.getRemoteSocketAddress());
 
         final ConnectionHandler handler = new ConnectionHandler(clientSocket);
         if (clientSocket.isConnected()) {
-          LOGGER.info("isConnected");
+          LOGGER.debug("isConnected");
 
           this.onClientConnected(handler);
           handler.addListener(this);
@@ -180,7 +180,7 @@ public class SecureTcpThreadPoolServer extends Thread implements TcpServer, TcpC
           LOGGER.warn("Server socket isn't connected.");
         }
       } catch (SocketTimeoutException ste) {
-        LOGGER.info("Ignored, timeouts will happen every 1 second");
+        LOGGER.trace("Ignored, timeouts will happen every 1 second");
       } catch (IOException e) {
         e.printStackTrace();
         // Yield to other threads if an exception occurs (prevent CPU spin)
@@ -236,9 +236,9 @@ public class SecureTcpThreadPoolServer extends Thread implements TcpServer, TcpC
    */
   @Override
   public void onMessageReceived(final TcpConnection connection, final Object message) {
-    LOGGER.trace("Received new message from " + connection.getSocketAddress().getHostName() + ": " +
+    LOGGER.debug("Received new message from " + connection.getSocketAddress().getHostName() + ": " +
         "" + connection.getSocketAddress().getPort());
-    LOGGER.trace("Class name: " + message.getClass().getCanonicalName() + ", toString: " +
+    LOGGER.debug("Class name: " + message.getClass().getCanonicalName() + ", toString: " +
         message.toString());
     for (final TcpConnection.Listener listener : listeners) {
       listener.onMessageReceived(connection, message);
@@ -252,11 +252,11 @@ public class SecureTcpThreadPoolServer extends Thread implements TcpServer, TcpC
    */
   @Override
   public void onClientConnected(TcpConnection connection) {
-    LOGGER.info("onClientConnected");
-    LOGGER.info("New connection! " + connection.getSocketAddress().getHostName() + ": " +
+    LOGGER.debug("onClientConnected");
+    LOGGER.debug("New connection! " + connection.getSocketAddress().getHostName() + ": " +
         connection.getSocketAddress().getPort() + ".");
     connections.add(connection);
-    LOGGER.info("Current connections count: " + connections.size());
+    LOGGER.debug("Current connections count: " + connections.size());
     for (final TcpConnection.Listener listener : listeners) {
       listener.onClientConnected(connection);
     }
@@ -269,10 +269,10 @@ public class SecureTcpThreadPoolServer extends Thread implements TcpServer, TcpC
    */
   @Override
   public void onClientDisconnected(TcpConnection connection) {
-    LOGGER.info("Disconnect! Ip: " + connection.getSocketAddress().getHostName() + ": " +
+    LOGGER.debug("Disconnect! Ip: " + connection.getSocketAddress().getHostName() + ": " +
         connection.getSocketAddress().getPort() + ".");
     connections.remove(connection);
-    LOGGER.info("Current connections count: " + connections.size());
+    LOGGER.debug("Current connections count: " + connections.size());
     for (final TcpConnection.Listener listener : listeners) {
       listener.onClientDisconnected(connection);
     }
