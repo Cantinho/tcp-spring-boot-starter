@@ -27,6 +27,7 @@
   <modules>
     <module>client</module>
 	<module>tcp-spring-boot-starter</module>
+    <module>scalable-tcp-spring-boot-starter</module>
   </modules>
   
 </project>
