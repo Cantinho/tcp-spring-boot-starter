@@ -8,14 +8,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
-import javax.annotation.PostConstruct;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static br.com.cantinho.tcpspringbootstarter.ApplicationConfig.CURRENT_SERVER_IMPLEMENTATION;
+import static br.com.cantinho.tcpspringbootstarter.config.ApplicationConfig.CURRENT_SERVER_IMPLEMENTATION;
 
 public class TcpControllerBeanPostProcessor implements BeanPostProcessor {
 

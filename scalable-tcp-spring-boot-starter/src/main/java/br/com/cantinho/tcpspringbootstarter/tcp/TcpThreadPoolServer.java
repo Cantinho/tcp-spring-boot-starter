@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static br.com.cantinho.tcpspringbootstarter.ApplicationConfig
+import static br.com.cantinho.tcpspringbootstarter.config.ApplicationConfig
     .NON_SECURE_SERVER_IMPLEMENTATION;
 
 /**

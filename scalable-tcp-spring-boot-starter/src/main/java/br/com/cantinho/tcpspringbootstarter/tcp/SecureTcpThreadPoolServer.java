@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static br.com.cantinho.tcpspringbootstarter.ApplicationConfig.SECURE_SERVER_IMPLEMENTATION;
+import static br.com.cantinho.tcpspringbootstarter.config.ApplicationConfig.SECURE_SERVER_IMPLEMENTATION;
 
 /**
  * Listens for connections on a specified port.

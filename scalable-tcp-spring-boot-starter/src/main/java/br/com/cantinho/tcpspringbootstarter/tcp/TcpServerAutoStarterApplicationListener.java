@@ -1,8 +1,6 @@
 package br.com.cantinho.tcpspringbootstarter.tcp;
 
-import br.com.cantinho.tcpspringbootstarter.ApplicationConfig;
 import br.com.cantinho.tcpspringbootstarter.starter.TcpServerAutoConfiguration;
-import br.com.cantinho.tcpspringbootstarter.starter.TcpServerProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
-import javax.annotation.PostConstruct;
-
-import static br.com.cantinho.tcpspringbootstarter.ApplicationConfig.CURRENT_SERVER_IMPLEMENTATION;
+import static br.com.cantinho.tcpspringbootstarter.config.ApplicationConfig.CURRENT_SERVER_IMPLEMENTATION;
 
 /**
  * TCP server auto starter application listener.
