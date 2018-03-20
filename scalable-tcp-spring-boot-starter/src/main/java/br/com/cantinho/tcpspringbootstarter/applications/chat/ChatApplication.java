@@ -6,21 +6,22 @@ import br.com.cantinho.tcpspringbootstarter.applications.chat.domain.ChatCommand
 import br.com.cantinho.tcpspringbootstarter.applications.chat.domain.UserIdentifier;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions.*;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatData;
+import br.com.cantinho.tcpspringbootstarter.redis.queue.MessagePublisher;
+import br.com.cantinho.tcpspringbootstarter.redis.queue.RedisMessagePublisher;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.Message;
+import org.springframework.data.redis.connection.MessageListener;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 
-public class ChatApplication implements Application {
+@Service
+public class ChatApplication implements Application, MessageListener {
 
   /**
    * A logger instance.
@@ -36,12 +37,46 @@ public class ChatApplication implements Application {
    */
   private final Map<String, String> rooms = Collections.synchronizedMap(new HashMap<>());
 
+  //@Autowired
+  private RedisMessagePublisher redisMessagePublisher;
+
+  public ChatApplication(MessagePublisher redisMessagePublisher) {
+    this.redisMessagePublisher = (RedisMessagePublisher) redisMessagePublisher;
+  }
+
+  //  @Test
+//  public void testOnMessage() throws Exception {
+//    String message = "Chat Message " + UUID.randomUUID();
+//    redisMessagePublisher.publish(message);
+//    Thread.sleep(100);
+//    assertTrue(RedisMessageSubscriber.messageList.get(0).contains(message));
+//  }
+
+  //assertTrue(RedisMessageSubscriber.messageList.get(0).contains(message));
+
+  @Override
+  public void onMessage(Message message, byte[] bytes) {
+    System.out.println("Message received: " + new String(message.getBody()));
+  }
+
+  private void publish(final ChatData data) {
+    String message = "Chat Message::id:" + UUID.randomUUID() + ":" + data.toString();
+    redisMessagePublisher.publish(message);
+  }
+
+
   @Override
   public Object process(Object... parameters) {
     LOGGER.debug("process");
     final String uci = (String) parameters[0];
     final Class clazz = (Class) parameters[1];
     final ChatData request = (ChatData) parameters[2];
+
+    try {
+      publish(request);
+    } catch (final Exception exc) {
+      exc.printStackTrace();
+    }
 
     List<Bag> responseBags = new LinkedList<>();
     try {

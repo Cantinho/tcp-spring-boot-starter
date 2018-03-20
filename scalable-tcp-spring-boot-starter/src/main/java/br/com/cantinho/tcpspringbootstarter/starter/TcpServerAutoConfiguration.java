@@ -12,6 +12,7 @@ import br.com.cantinho.tcpspringbootstarter.assigners.converters.V1DataConverter
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.V2DataConverter;
 import br.com.cantinho.tcpspringbootstarter.clients.BasicClientHandler;
 import br.com.cantinho.tcpspringbootstarter.clients.ClientHandler;
+import br.com.cantinho.tcpspringbootstarter.config.RedisConfig;
 import br.com.cantinho.tcpspringbootstarter.data.BasicDataHandler;
 import br.com.cantinho.tcpspringbootstarter.data.DataHandler;
 import br.com.cantinho.tcpspringbootstarter.data.DataHandlerException;
@@ -19,6 +20,9 @@ import br.com.cantinho.tcpspringbootstarter.filters.BasicFilterHandler;
 import br.com.cantinho.tcpspringbootstarter.filters.ExcludeComputeInternalHostNameFilter;
 import br.com.cantinho.tcpspringbootstarter.filters.Filter;
 import br.com.cantinho.tcpspringbootstarter.filters.FilterHandler;
+import br.com.cantinho.tcpspringbootstarter.redis.queue.MessagePublisher;
+import br.com.cantinho.tcpspringbootstarter.redis.queue.RedisMessagePublisher;
+import br.com.cantinho.tcpspringbootstarter.redis.queue.RedisMessageSubscriber;
 import br.com.cantinho.tcpspringbootstarter.tcp.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +35,20 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
+import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
+import org.springframework.data.redis.serializer.GenericToStringSerializer;
+import redis.clients.jedis.JedisPoolConfig;
 
 @Configuration
 @EnableAutoConfiguration
 @EnableConfigurationProperties(TcpServerProperties.class)
+@EnableRedisRepositories(basePackages = "br.com.cantinho.tcpspringbootstarter.redis.repo")
 @ConditionalOnProperty(prefix = "tcp.server", name = {"port", "autoStart"})
 public class TcpServerAutoConfiguration {
 
@@ -119,13 +133,84 @@ public class TcpServerAutoConfiguration {
     final List<Assignable> assignables = new ArrayList<>();
     assignables.add(new EchoAssignable(echoConverters, clientHandler(), new EchoApplication()));
     assignables.add(new RoomAssignable(roomConverters, clientHandler(), new RoomApplication()));
-    assignables.add(new ChatAssignable(chatConverters, clientHandler(), new ChatApplication()));
+    assignables.add(new ChatAssignable(chatConverters, clientHandler(), new ChatApplication(redisPublisher())));
 
     if(assignables.isEmpty()) {
       throw new RuntimeException("Assignable doesn't exist.");
     }
     LOGGER.info("dataHandler::assignables: " + assignables);
     return new BasicDataHandler(assignables);
+  }
+
+
+  //    @Bean
+//    JedisConnectionFactory jedisConnectionFactory() {
+//        return new JedisConnectionFactory();
+//    }
+
+//    /**
+//     * Redis host address.
+//     */
+//    @Value("${redis.host}")
+//    private transient String redisHost;
+//
+//    /**
+//     * Redis port address.
+//     */
+//    @Value("${redis.port}")
+//    private transient int redisPort;
+
+  /**
+   * Creates a RedisConnectionFactory configured object to
+   * connect to a Redis instance.
+   *
+   * @return a RedisConnectionFactory instance.
+   */
+  @Bean
+  public RedisConnectionFactory redisConnectionFactory() {
+    final JedisPoolConfig poolConfig = new JedisPoolConfig();
+    poolConfig.setMaxTotal(200);
+    poolConfig.setTestOnBorrow(true);
+    poolConfig.setTestOnReturn(true);
+
+    final JedisConnectionFactory connectionFactory = new JedisConnectionFactory(poolConfig);
+    connectionFactory.setUsePool(true);
+    connectionFactory.setHostName("10.100.100.102");
+    connectionFactory.setPort(6379);
+
+    return connectionFactory;
+  }
+
+  @Bean
+  public RedisTemplate<String, Object> redisTemplate() {
+    final RedisTemplate<String, Object> template = new RedisTemplate<String, Object>();
+    template.setConnectionFactory(redisConnectionFactory());
+    template.setValueSerializer(new GenericToStringSerializer<Object>(Object.class));
+    return template;
+  }
+
+  @Bean
+  MessageListenerAdapter messageListener() {
+    return new MessageListenerAdapter(new RedisMessageSubscriber());
+  }
+
+  @Bean
+  RedisMessageListenerContainer redisContainer() {
+    final RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+    container.setConnectionFactory(redisConnectionFactory());
+    container.addMessageListener(messageListener(), topic());
+    return container;
+  }
+
+  @Bean
+  @Scope("singleton")
+  public MessagePublisher redisPublisher() {
+    return new RedisMessagePublisher(redisTemplate(), topic());
+  }
+
+  @Bean
+  ChannelTopic topic() {
+    return new ChannelTopic("pubsub:chat");
   }
 
 }
