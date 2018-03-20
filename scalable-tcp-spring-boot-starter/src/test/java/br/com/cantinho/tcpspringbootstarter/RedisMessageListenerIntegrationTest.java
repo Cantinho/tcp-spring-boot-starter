@@ -1,8 +1,9 @@
 package br.com.cantinho.tcpspringbootstarter;
 
-import br.com.cantinho.tcpspringbootstarter.config.RedisConfig;
+import br.com.cantinho.tcpspringbootstarter.redis.queue.MessagePublisher;
 import br.com.cantinho.tcpspringbootstarter.redis.queue.RedisMessagePublisher;
 import br.com.cantinho.tcpspringbootstarter.redis.queue.RedisMessageSubscriber;
+import br.com.cantinho.tcpspringbootstarter.starter.TcpServerAutoConfiguration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,11 +15,11 @@ import java.util.UUID;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = RedisConfig.class)
+@ContextConfiguration(classes = TcpServerAutoConfiguration.class)
 public class RedisMessageListenerIntegrationTest {
 
     @Autowired
-    private RedisMessagePublisher redisMessagePublisher;
+    private MessagePublisher redisMessagePublisher;
 
     @Test
     public void testOnMessage() throws Exception {

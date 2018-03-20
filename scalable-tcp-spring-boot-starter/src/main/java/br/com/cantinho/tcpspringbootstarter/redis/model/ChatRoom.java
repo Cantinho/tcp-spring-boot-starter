@@ -5,7 +5,7 @@ import java.io.Serializable;
 import org.springframework.data.redis.core.RedisHash;
 
 @RedisHash("ChatApplication")
-public class ChatMessage implements Serializable {
+public class ChatRoom implements Serializable {
 
     /**
      * Id.
@@ -17,7 +17,9 @@ public class ChatMessage implements Serializable {
      */
     private String owner;
 
-    public ChatMessage(final String id, final String owner) {
+
+
+    public ChatRoom(final String id, final String owner) {
         this.id = id;
         this.owner = owner;
     }
@@ -40,7 +42,7 @@ public class ChatMessage implements Serializable {
 
     @Override
     public String toString() {
-        return "ChatMessage{" +
+        return "ChatRoom{" +
             "id='" + id + '\'' +
             ", owner='" + owner + '\'' +
             '}';

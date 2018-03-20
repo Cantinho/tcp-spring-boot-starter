@@ -6,19 +6,20 @@ import br.com.cantinho.tcpspringbootstarter.applications.chat.domain.ChatCommand
 import br.com.cantinho.tcpspringbootstarter.applications.chat.domain.UserIdentifier;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions.*;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatData;
+import br.com.cantinho.tcpspringbootstarter.redis.model.ChatRoom;
 import br.com.cantinho.tcpspringbootstarter.redis.queue.MessagePublisher;
 import br.com.cantinho.tcpspringbootstarter.redis.queue.RedisMessagePublisher;
+import br.com.cantinho.tcpspringbootstarter.redis.repo.ChatRoomRepository;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 @Service
 public class ChatApplication implements Application, MessageListener {
@@ -37,22 +38,15 @@ public class ChatApplication implements Application, MessageListener {
    */
   private final Map<String, String> rooms = Collections.synchronizedMap(new HashMap<>());
 
-  //@Autowired
   private RedisMessagePublisher redisMessagePublisher;
 
-  public ChatApplication(MessagePublisher redisMessagePublisher) {
+  private ChatRoomRepository chatRoomRepository;
+
+  public ChatApplication(final MessagePublisher redisMessagePublisher, final
+  ChatRoomRepository chatRoomRepository) {
     this.redisMessagePublisher = (RedisMessagePublisher) redisMessagePublisher;
+    this.chatRoomRepository = chatRoomRepository;
   }
-
-  //  @Test
-//  public void testOnMessage() throws Exception {
-//    String message = "Chat Message " + UUID.randomUUID();
-//    redisMessagePublisher.publish(message);
-//    Thread.sleep(100);
-//    assertTrue(RedisMessageSubscriber.messageList.get(0).contains(message));
-//  }
-
-  //assertTrue(RedisMessageSubscriber.messageList.get(0).contains(message));
 
   @Override
   public void onMessage(Message message, byte[] bytes) {
@@ -60,10 +54,12 @@ public class ChatApplication implements Application, MessageListener {
   }
 
   private void publish(final ChatData data) {
-    String message = "Chat Message::id:" + UUID.randomUUID() + ":" + data.toString();
+    final String message = "Chat Message::id:" + UUID.randomUUID() + ":" + data.toString();
     redisMessagePublisher.publish(message);
-  }
 
+    final ChatRoom chatRoom = new ChatRoom("WORKPLACE001", "Stephanie");
+    chatRoomRepository.save(chatRoom);
+  }
 
   @Override
   public Object process(Object... parameters) {
@@ -80,9 +76,7 @@ public class ChatApplication implements Application, MessageListener {
 
     List<Bag> responseBags = new LinkedList<>();
     try {
-
       responseBags.addAll(processCommand(clazz, uci, request));
-
     } catch (InvalidParameterException
         | UserOwnerOfAnotherRoomException
         | RoomAlreadyExistsException
@@ -416,6 +410,33 @@ public class ChatApplication implements Application, MessageListener {
   }
 
   /**
+   * Fetches room from remote.
+   */
+  private void fetchRoomRemotely() {
+    synchronized (rooms) {
+      try {
+        final Iterable<ChatRoom> all = chatRoomRepository.findAll();
+        all.forEach(chatRoom -> rooms.put(chatRoom.getId(), chatRoom.getOwner()));
+      } catch (final Exception exc) {
+        exc.printStackTrace();
+      }
+    }
+  }
+
+  /**
+   * Saves room remotely.
+   *
+   * @param roomName
+   * @param owner
+   */
+  private void saveRoomLocalAndRemotely(final String roomName, final String owner) {
+    synchronized (rooms) {
+      chatRoomRepository.save(new ChatRoom(roomName, owner));
+      rooms.put(roomName, owner);
+    }
+  }
+
+  /**
    * Creates a room and sets himself as owner, if it does not exist. You can only create a room
    * if you are connected and if you are not in another room.
    *
@@ -433,6 +454,11 @@ public class ChatApplication implements Application, MessageListener {
       throw new InvalidParameterException(data.getMsg(),
           "The room " + data.getMsg() + " can not be empty.");
     }
+
+    /**
+     * Fetching rooms from remote.
+     */
+    fetchRoomRemotely();
 
     if(rooms.containsKey(data.getMsg())) {
       throw new RoomAlreadyExistsException(data.getMsg(),
@@ -472,7 +498,10 @@ public class ChatApplication implements Application, MessageListener {
           "User " + data.getFrom() + " is not connected to the server.");
     }
 
-    rooms.put(data.getMsg(), data.getFrom());
+    // Push
+    //rooms.put(data.getMsg(), data.getFrom());
+    // TODO check this.
+    saveRoomLocalAndRemotely(data.getMsg(), data.getFrom());
 
     final List<Bag> responseBags = new LinkedList<>();
     responseBags.add(createDirectResponse(clazz, uci, data.getFrom(), data.getCmd(),

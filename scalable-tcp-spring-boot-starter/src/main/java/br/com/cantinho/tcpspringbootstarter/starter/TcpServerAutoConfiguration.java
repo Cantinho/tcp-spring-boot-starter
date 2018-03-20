@@ -12,7 +12,6 @@ import br.com.cantinho.tcpspringbootstarter.assigners.converters.V1DataConverter
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.V2DataConverter;
 import br.com.cantinho.tcpspringbootstarter.clients.BasicClientHandler;
 import br.com.cantinho.tcpspringbootstarter.clients.ClientHandler;
-import br.com.cantinho.tcpspringbootstarter.config.RedisConfig;
 import br.com.cantinho.tcpspringbootstarter.data.BasicDataHandler;
 import br.com.cantinho.tcpspringbootstarter.data.DataHandler;
 import br.com.cantinho.tcpspringbootstarter.data.DataHandlerException;
@@ -23,11 +22,13 @@ import br.com.cantinho.tcpspringbootstarter.filters.FilterHandler;
 import br.com.cantinho.tcpspringbootstarter.redis.queue.MessagePublisher;
 import br.com.cantinho.tcpspringbootstarter.redis.queue.RedisMessagePublisher;
 import br.com.cantinho.tcpspringbootstarter.redis.queue.RedisMessageSubscriber;
+import br.com.cantinho.tcpspringbootstarter.redis.repo.ChatRoomRepository;
 import br.com.cantinho.tcpspringbootstarter.tcp.*;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -133,7 +134,9 @@ public class TcpServerAutoConfiguration {
     final List<Assignable> assignables = new ArrayList<>();
     assignables.add(new EchoAssignable(echoConverters, clientHandler(), new EchoApplication()));
     assignables.add(new RoomAssignable(roomConverters, clientHandler(), new RoomApplication()));
-    assignables.add(new ChatAssignable(chatConverters, clientHandler(), new ChatApplication(redisPublisher())));
+    assignables.add(new ChatAssignable(chatConverters, clientHandler(),
+        new ChatApplication(redisPublisher(), chatMessageRepository()))
+    );
 
     if(assignables.isEmpty()) {
       throw new RuntimeException("Assignable doesn't exist.");
@@ -142,23 +145,12 @@ public class TcpServerAutoConfiguration {
     return new BasicDataHandler(assignables);
   }
 
+  @Autowired
+  private ChatRoomRepository chatRoomRepository;
 
-  //    @Bean
-//    JedisConnectionFactory jedisConnectionFactory() {
-//        return new JedisConnectionFactory();
-//    }
-
-//    /**
-//     * Redis host address.
-//     */
-//    @Value("${redis.host}")
-//    private transient String redisHost;
-//
-//    /**
-//     * Redis port address.
-//     */
-//    @Value("${redis.port}")
-//    private transient int redisPort;
+  ChatRoomRepository chatMessageRepository() {
+    return chatRoomRepository;
+  }
 
   /**
    * Creates a RedisConnectionFactory configured object to
