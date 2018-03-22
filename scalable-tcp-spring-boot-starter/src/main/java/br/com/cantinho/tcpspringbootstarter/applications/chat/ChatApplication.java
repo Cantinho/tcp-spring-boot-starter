@@ -1235,20 +1235,17 @@ public class ChatApplication implements Application, MessageListener {
 
   private List<Bag> publishLocalOwnerLeaveRoom(final CloudBag cloudBag) {
     final List<Bag> responseBags = new ArrayList<>();
-    final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
+    final ListIterator<UserIdentifier> iterator = userIdentifiers.listIterator();
     while (iterator.hasNext()) {
       final UserIdentifier userIdentifier = iterator.next();
-      if (!rooms.containsKey(userIdentifier.getRoom())) {
-        try {
-          responseBags.addAll(leaveRoomLocal(userIdentifier.getVersion(), userIdentifier.getUci(),
-              cloudBag.getChatData()));
-        } catch (RoomNotFoundException
-            | UserDoesNotBelongToAnyRoomException
-            | UserNotConnectedException
-            | UserConnectedToAnotherRoomException
-            | InvalidParameterException exc) {
-          LOGGER.error("[error]: {}", exc.getMessage());
-        }
+      final String room = cloudBag.getChatData().getMsg();
+      if(userIdentifier.getRoom().equals(room)) {
+        userIdentifier.setRoom("");
+        iterator.set(userIdentifier);
+
+        responseBags.add(createDirectResponse(userIdentifier.getVersion(), userIdentifier.getUci(),
+            userIdentifier.getName(), ChatCommands.LEAVE_ROOM, ChatCommands.ResponseCode.OK,
+            "User " + userIdentifier.getName() + " was removed from room " + room + "."));
       }
     }
     return  responseBags;
