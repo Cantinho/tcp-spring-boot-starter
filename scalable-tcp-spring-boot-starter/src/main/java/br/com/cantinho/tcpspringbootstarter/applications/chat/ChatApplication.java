@@ -74,18 +74,22 @@ public class ChatApplication implements Application, MessageListener {
 
     switch (cloudBag.getEvent()) {
       case CloudEvents.CREATE_ROOM: {
+        LOGGER.info("CloudEvents.CREATE_ROOM");
         // it's only necessary to update local repository
         break;
       }
       case CloudEvents.LEAVE_ROOM: {
+        LOGGER.info("CloudEvents.LEAVE_ROOM");
         responseBags.addAll(publishLocalLeaveRoom(cloudBag));
         break;
       }
       case CloudEvents.LEAVE_ROOM_OWNER: {
+        LOGGER.info("CloudEvents.LEAVE_ROOM_OWNER");
         responseBags.addAll(publishLocalOwnerLeaveRoom(cloudBag));
         break;
       }
       case CloudEvents.SEND_SUR: {
+        LOGGER.info("CloudEvents.SEND_SUR");
         responseBags.addAll(publishLocalSendMessage(cloudBag));
         break;
       }
@@ -1237,7 +1241,9 @@ public class ChatApplication implements Application, MessageListener {
     final List<Bag> responseBags = new ArrayList<>();
     final ListIterator<UserIdentifier> iterator = userIdentifiers.listIterator();
     while (iterator.hasNext()) {
+
       final UserIdentifier userIdentifier = iterator.next();
+      LOGGER.info("UserIdentifier: {}", userIdentifier);
       final String room = cloudBag.getChatData().getMsg();
       if(userIdentifier.getRoom().equals(room)) {
         userIdentifier.setRoom("");

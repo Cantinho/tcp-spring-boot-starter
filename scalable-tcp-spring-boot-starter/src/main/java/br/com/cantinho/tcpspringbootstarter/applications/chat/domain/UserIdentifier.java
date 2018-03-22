@@ -74,4 +74,14 @@ public class UserIdentifier {
     this.room = room;
   }
 
+  @Override
+  public String toString() {
+    return "UserIdentifier{" +
+        "version=" + version +
+        ", uci='" + uci + '\'' +
+        ", name='" + name + '\'' +
+        ", room='" + room + '\'' +
+        ", lastUpdatedAt=" + lastUpdatedAt +
+        '}';
+  }
 }
