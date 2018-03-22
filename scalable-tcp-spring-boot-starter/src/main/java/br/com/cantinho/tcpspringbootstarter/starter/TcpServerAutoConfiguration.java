@@ -146,9 +146,7 @@ public class TcpServerAutoConfiguration {
     final List<Assignable> assignables = new ArrayList<>();
     assignables.add(new EchoAssignable(echoConverters, clientHandler(), new EchoApplication()));
     assignables.add(new RoomAssignable(roomConverters, clientHandler(), new RoomApplication()));
-    assignables.add(new ChatAssignable(chatConverters, clientHandler(),
-        new ChatApplication(redisPublisher(), chatMessageRepository()))
-    );
+    assignables.add(new ChatAssignable(chatConverters, clientHandler(), chatApplication()));
 
     if(assignables.isEmpty()) {
       throw new RuntimeException("Assignable doesn't exist.");
@@ -194,8 +192,14 @@ public class TcpServerAutoConfiguration {
   }
 
   @Bean
+  @Scope("singleton")
+  ChatApplication chatApplication() {
+    return new ChatApplication(redisPublisher(), chatMessageRepository());
+  }
+
+  @Bean
   MessageListenerAdapter messageListener() {
-    return new MessageListenerAdapter(new RedisMessageSubscriber());
+    return new MessageListenerAdapter(chatApplication());
   }
 
   @Bean

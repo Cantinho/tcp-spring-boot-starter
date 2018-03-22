@@ -65,7 +65,9 @@ public class ChatApplication implements Application, MessageListener {
     final CloudBag cloudBag = new Gson().fromJson(body, CloudBag.class);
 
     LOGGER.info("Message received: {}", body);
-
+    LOGGER.info("cloudbag:" + cloudBag);
+    LOGGER.info("uuid: {}" + uuid);
+    LOGGER.info("uuid: {}" + cloudBag.getId());
     if (null == cloudBag || uuid.equals(cloudBag.getId())) {
       return;
     }
