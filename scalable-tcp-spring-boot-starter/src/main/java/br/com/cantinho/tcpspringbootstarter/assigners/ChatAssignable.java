@@ -1,9 +1,7 @@
 package br.com.cantinho.tcpspringbootstarter.assigners;
 
 import br.com.cantinho.tcpspringbootstarter.applications.Application;
-import br.com.cantinho.tcpspringbootstarter.applications.chat.ChatApplication;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.domain.Bag;
-import br.com.cantinho.tcpspringbootstarter.applications.chat.domain.ChatCommands;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatData;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatDataConverter;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.IConverter;
@@ -55,6 +53,26 @@ public class ChatAssignable extends Assignable {
     }
     this.converters = converters;
     this.application = application;
+
+    this.application.setListener(parameters -> {
+      final ObjectMapper mapper = new ObjectMapper();
+      final List<Bag> bags = (List<Bag>) parameters[0];
+      for(final Bag bag : bags) {
+        final Object objectData;
+        try {
+          objectData = ChatDataConverter.dejsonizeFrom(bag.getVersion(), bag.getChatData());
+          final String jsonInString = mapper.writeValueAsString(objectData);
+          try {
+            send(bag.getUci(), jsonInString.getBytes());
+          } catch (AssignableException e) {
+            LOGGER.debug("Content not sent. Message: {}", e.getMessage());
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+
+      }
+    });
   }
 
   /**
@@ -155,7 +173,6 @@ public class ChatAssignable extends Assignable {
       } catch (Exception e) {
         e.printStackTrace();
       }
-
     }
   }
 
@@ -169,4 +186,7 @@ public class ChatAssignable extends Assignable {
     return null;
   }
 
+  private interface CloudChangesListener {
+    void CloudChangesListener(List<Bag> bag);
+  }
 }

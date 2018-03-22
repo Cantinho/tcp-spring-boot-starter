@@ -10,6 +10,11 @@ public class ChatRoom implements Serializable {
     /**
      * Id.
      */
+    private String id;
+
+    /**
+     * Name.
+     */
     private String name;
 
     /**
@@ -17,11 +22,18 @@ public class ChatRoom implements Serializable {
      */
     private String owner;
 
-
-
-    public ChatRoom(final String name, final String owner) {
+    public ChatRoom(final String id, final String name, final String owner) {
+        this.id = id;
         this.name = name;
         this.owner = owner;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -43,7 +55,8 @@ public class ChatRoom implements Serializable {
     @Override
     public String toString() {
         return "ChatRoom{" +
-            "name='" + name + '\'' +
+            "id='" + id + '\'' +
+            ", name='" + name + '\'' +
             ", owner='" + owner + '\'' +
             '}';
     }

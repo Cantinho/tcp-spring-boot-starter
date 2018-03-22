@@ -1,6 +1,6 @@
 package br.com.cantinho.tcpspringbootstarter.assigners.converters;
 
-public class  ChatData {
+public class ChatData {
 
   private String from;
   private String to;

@@ -24,7 +24,7 @@ public class ChatRoomRepositoryIntegrationTest {
 
     @Test
     public void whenSavingStudent_thenAvailableOnRetrieval() throws Exception {
-        final ChatRoom chatRoom = new ChatRoom("Room001", "John Doe");
+        final ChatRoom chatRoom = new ChatRoom("Room001", "Room001", "John Doe");
         chatRoomRepository.save(chatRoom);
         final ChatRoom retrievedChatRoom = chatRoomRepository.findById(chatRoom.getName()).get();
         assertEquals(chatRoom.getName(), retrievedChatRoom.getName());
@@ -32,7 +32,7 @@ public class ChatRoomRepositoryIntegrationTest {
 
     @Test
     public void whenUpdatingStudent_thenAvailableOnRetrieval() throws Exception {
-        final ChatRoom chatRoom = new ChatRoom("Room001", "John Doe");
+        final ChatRoom chatRoom = new ChatRoom("Room001", "Room001", "John Doe");
         chatRoomRepository.save(chatRoom);
         chatRoom.setOwner("Richard Watson");
         chatRoomRepository.save(chatRoom);
@@ -42,8 +42,8 @@ public class ChatRoomRepositoryIntegrationTest {
 
     @Test
     public void whenSavingStudents_thenAllShouldAvailableOnRetrieval() throws Exception {
-        final ChatRoom engRoom = new ChatRoom("Room001", "John Doe");
-        final ChatRoom medRoom = new ChatRoom("Room002", "Gareth Houston");
+        final ChatRoom engRoom = new ChatRoom("Room001", "Room001", "John Doe");
+        final ChatRoom medRoom = new ChatRoom("Room002", "Room002", "Gareth Houston");
         chatRoomRepository.save(engRoom);
         chatRoomRepository.save(medRoom);
         List<ChatRoom> messages = new ArrayList<>();
@@ -53,7 +53,7 @@ public class ChatRoomRepositoryIntegrationTest {
 
     @Test
     public void whenDeletingStudent_thenNotAvailableOnRetrieval() throws Exception {
-        final ChatRoom message = new ChatRoom("Room001", "John Doe");
+        final ChatRoom message = new ChatRoom("Room001","Room001", "John Doe");
         chatRoomRepository.save(message);
         chatRoomRepository.deleteById(message.getName());
         final ChatRoom retrievedMessage = chatRoomRepository.findById(message.getName()).orElse(null);

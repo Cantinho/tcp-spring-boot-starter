@@ -1,6 +1,7 @@
 package br.com.cantinho.tcpspringbootstarter.applications.chat;
 
 import br.com.cantinho.tcpspringbootstarter.applications.Application;
+import br.com.cantinho.tcpspringbootstarter.applications.ApplicationListener;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.domain.*;
 import br.com.cantinho.tcpspringbootstarter.applications.chat.exceptions.*;
 import br.com.cantinho.tcpspringbootstarter.assigners.converters.ChatData;
@@ -23,10 +24,6 @@ public class ChatApplication implements Application, MessageListener {
 
   private final String uuid = UUID.randomUUID().toString();
 
-  private String getUuid() {
-    return uuid;
-  }
-
   /**
    * A logger instance.
    */
@@ -47,8 +44,10 @@ public class ChatApplication implements Application, MessageListener {
 
   private ChatRoomRepository chatRoomRepository;
 
-  public ChatApplication(final MessagePublisher redisMessagePublisher, final
-  ChatRoomRepository chatRoomRepository) {
+  private ApplicationListener listener;
+
+  public ChatApplication(final MessagePublisher redisMessagePublisher,
+                         final ChatRoomRepository chatRoomRepository) {
     this.redisMessagePublisher = (RedisMessagePublisher) redisMessagePublisher;
     this.chatRoomRepository = chatRoomRepository;
   }
@@ -114,29 +113,21 @@ public class ChatApplication implements Application, MessageListener {
       UserConnectedToAnotherRoomException, UserNotConnectedException, RoomNotFoundException,
       UserDoesNotBelongToAnyRoomException, DistinctRoomException, InvalidParameterException {
 
-    final List<Bag> bags = new ArrayList<>();
     switch (data.getCmd()) {
       case ChatCommands.CONNECT:
-        bags.addAll(connectLocal(clazz, uci, data));
-        break;
+        return connectLocal(clazz, uci, data);
       case ChatCommands.CREATE_ROOM:
-        bags.addAll(createRoomLocal(clazz, uci, data));
-        break;
+        return createRoomLocal(clazz, uci, data);
       case ChatCommands.LEAVE_ROOM:
-        bags.addAll(leaveRoomLocal(clazz, uci, data));
-        break;
+        return leaveRoomLocal(clazz, uci, data);
       case ChatCommands.DISCONNECT:
-        bags.addAll(disconnectLocal(clazz, uci, data));
-        break;
+        return disconnectLocal(clazz, uci, data);
       case ChatCommands.JOIN_ROOM:
-        bags.addAll(joinRoomLocal(clazz, uci, data));
-        break;
+        return joinRoomLocal(clazz, uci, data);
       case ChatCommands.SEND_SUR:
-        sendSpecificUserInRoomMessageRoomLocal(clazz, uci, data);
-        break;
+        return sendSpecificUserInRoomMessageRoomLocal(clazz, uci, data);
       case ChatCommands.KEEP_ALIVE:
-        bags.addAll(keepAliveLocal(clazz, uci, data));
-        break;
+        return keepAliveLocal(clazz, uci, data);
     }
 
     throw new IllegalStateException("Something wrong happened.");
@@ -164,7 +155,7 @@ public class ChatApplication implements Application, MessageListener {
    */
   private void saveRoomLocalAndRemotely(final String roomName, final String owner) {
     synchronized (rooms) {
-      chatRoomRepository.save(new ChatRoom(roomName, owner));
+      chatRoomRepository.save(new ChatRoom( UUID.randomUUID().toString(), roomName, owner));
       rooms.put(roomName, owner);
     }
   }
@@ -624,6 +615,11 @@ public class ChatApplication implements Application, MessageListener {
     }
     LOGGER.debug("onDisconnect:{}", uci);
     return bags;
+  }
+
+  @Override
+  public void setListener(final ApplicationListener listener) {
+    this.listener = listener;
   }
 
   private List<Bag> keepAliveLocal(final Class clazz, final String uci, final ChatData data)
@@ -1208,7 +1204,9 @@ public class ChatApplication implements Application, MessageListener {
 //  }
 
   private void publishLocalChanges(final List<Bag> changes) {
-    // se comunicar com um transmitter
+    if(listener != null) {
+      listener.doAction(changes);
+    }
   }
 
   private List<Bag> publishLocalSendMessage(CloudBag cloudBag) {
