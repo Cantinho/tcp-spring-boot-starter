@@ -145,8 +145,9 @@ public class ChatApplication implements Application, MessageListener {
   private void fetchRoomRemotely() {
     synchronized (rooms) {
       try {
+        rooms.clear();
         final Iterable<ChatRoom> all = chatRoomRepository.findAll();
-        all.forEach(chatRoom -> rooms.put(chatRoom.getName(), chatRoom.getOwner()));
+        all.forEach(chatRoom -> root ms.put(chatRoom.getName(), chatRoom.getOwner()));
       } catch (final Exception exc) {
         exc.printStackTrace();
       }
