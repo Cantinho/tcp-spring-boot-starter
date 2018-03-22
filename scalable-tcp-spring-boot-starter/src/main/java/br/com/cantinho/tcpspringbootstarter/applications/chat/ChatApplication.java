@@ -163,7 +163,9 @@ public class ChatApplication implements Application, MessageListener {
   private void removeRoomRemotely(final String name) {
     final Iterable<ChatRoom> all = chatRoomRepository.findAll();
     for(final ChatRoom chatRoom : all) {
-      chatRoomRepository.delete(chatRoom);
+      if(chatRoom.getName().equals(name)) {
+        chatRoomRepository.delete(chatRoom);
+      }
     }
   }
 
