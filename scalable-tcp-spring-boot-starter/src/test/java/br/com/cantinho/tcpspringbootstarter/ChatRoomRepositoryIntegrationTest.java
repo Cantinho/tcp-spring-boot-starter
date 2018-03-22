@@ -26,8 +26,8 @@ public class ChatRoomRepositoryIntegrationTest {
     public void whenSavingStudent_thenAvailableOnRetrieval() throws Exception {
         final ChatRoom chatRoom = new ChatRoom("Room001", "John Doe");
         chatRoomRepository.save(chatRoom);
-        final ChatRoom retrievedChatRoom = chatRoomRepository.findById(chatRoom.getId()).get();
-        assertEquals(chatRoom.getId(), retrievedChatRoom.getId());
+        final ChatRoom retrievedChatRoom = chatRoomRepository.findById(chatRoom.getName()).get();
+        assertEquals(chatRoom.getName(), retrievedChatRoom.getName());
     }
 
     @Test
@@ -36,7 +36,7 @@ public class ChatRoomRepositoryIntegrationTest {
         chatRoomRepository.save(chatRoom);
         chatRoom.setOwner("Richard Watson");
         chatRoomRepository.save(chatRoom);
-        final ChatRoom retrievedChatRoom = chatRoomRepository.findById(chatRoom.getId()).get();
+        final ChatRoom retrievedChatRoom = chatRoomRepository.findById(chatRoom.getName()).get();
         assertEquals(chatRoom.getOwner(), retrievedChatRoom.getOwner());
     }
 
@@ -55,8 +55,8 @@ public class ChatRoomRepositoryIntegrationTest {
     public void whenDeletingStudent_thenNotAvailableOnRetrieval() throws Exception {
         final ChatRoom message = new ChatRoom("Room001", "John Doe");
         chatRoomRepository.save(message);
-        chatRoomRepository.deleteById(message.getId());
-        final ChatRoom retrievedMessage = chatRoomRepository.findById(message.getId()).orElse(null);
+        chatRoomRepository.deleteById(message.getName());
+        final ChatRoom retrievedMessage = chatRoomRepository.findById(message.getName()).orElse(null);
         assertNull(retrievedMessage);
     }
 }
