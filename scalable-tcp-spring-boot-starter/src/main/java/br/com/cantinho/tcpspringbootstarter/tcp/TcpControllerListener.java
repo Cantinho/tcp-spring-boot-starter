@@ -99,8 +99,8 @@ public class TcpControllerListener implements TcpConnection.Listener {
       try {
         disconnectedMethod.invoke(bean, connection);
       } catch (IllegalAccessException | InvocationTargetException exc) {
-        LOGGER.error("Could not process client disconnect for connection " + connection
-            .getSocketAddress(), exc);
+        LOGGER.debug("Could not process client disconnect for connection {}", connection
+            .getSocketAddress());
       }
     }
   }

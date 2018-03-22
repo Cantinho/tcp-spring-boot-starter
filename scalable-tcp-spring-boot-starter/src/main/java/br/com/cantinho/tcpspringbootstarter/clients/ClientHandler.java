@@ -46,7 +46,7 @@ public abstract class ClientHandler implements Transmitter {
         LOGGER.error("{}", exc.getMessage());
       }
     } else {
-      LOGGER.error("tcp connection is null");
+      LOGGER.debug("tcp connection is null");
     }
   }
 
@@ -57,12 +57,12 @@ public abstract class ClientHandler implements Transmitter {
     if(null != tcpConnection) {
       try {
         tcpConnection.close();
-        LOGGER.error("close ok");
+        LOGGER.debug("close ok");
       } catch (Exception exc) {
         LOGGER.error("{}", exc.getMessage());
       }
     } else {
-      LOGGER.error("tcp connection is null");
+      LOGGER.debug("tcp connection is null");
     }
   }
 
