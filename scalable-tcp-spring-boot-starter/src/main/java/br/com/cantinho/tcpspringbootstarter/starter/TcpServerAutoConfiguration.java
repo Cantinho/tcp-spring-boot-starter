@@ -62,6 +62,18 @@ public class TcpServerAutoConfiguration {
   private boolean secureEnabled;
 
   /**
+   * Redis host address.
+   */
+  @Value("${redis.host}")
+  private transient String redisHost;
+
+  /**
+   * Redis port address.
+   */
+  @Value("${redis.port}")
+  private transient Integer redisPort;
+
+  /**
    * Creates a new TCP Server AutoStarterListener.
    *
    * @return
@@ -167,8 +179,8 @@ public class TcpServerAutoConfiguration {
 
     final JedisConnectionFactory connectionFactory = new JedisConnectionFactory(poolConfig);
     connectionFactory.setUsePool(true);
-    connectionFactory.setHostName("10.100.100.102");
-    connectionFactory.setPort(6379);
+    connectionFactory.setHostName(redisHost);
+    connectionFactory.setPort(redisPort);
 
     return connectionFactory;
   }

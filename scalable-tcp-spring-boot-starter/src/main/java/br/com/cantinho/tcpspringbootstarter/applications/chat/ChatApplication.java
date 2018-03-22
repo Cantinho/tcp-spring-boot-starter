@@ -340,7 +340,7 @@ public class ChatApplication implements Application, MessageListener {
    */
   private List<Bag> leaveRoomLocal(final Class clazz, final String uci, final ChatData data)
       throws RoomNotFoundException, UserDoesNotBelongToAnyRoomException,
-      UserConnectedToAnotherRoomException, UserNotConnectedException {
+      UserConnectedToAnotherRoomException, UserNotConnectedException, InvalidParameterException {
 
     /**
      * Fetch rooms from remote.
@@ -364,6 +364,10 @@ public class ChatApplication implements Application, MessageListener {
      */
 
     fetchRoomRemotely();
+
+    if(StringUtils.isBlank(data.getMsg())) {
+      throw new InvalidParameterException("Invalid room value.");
+    }
 
     final List<Bag> responseBags = new LinkedList<>();
 
@@ -456,7 +460,7 @@ public class ChatApplication implements Application, MessageListener {
    */
   private List<Bag> disconnectLocal(final Class clazz, final String uci, final ChatData data)
       throws UserDoesNotBelongToAnyRoomException, UserConnectedToAnotherRoomException,
-      UserNotConnectedException, RoomNotFoundException {
+      UserNotConnectedException, RoomNotFoundException, InvalidParameterException {
 
     /**
      * Fetch rooms from remote.
@@ -607,7 +611,8 @@ public class ChatApplication implements Application, MessageListener {
         } catch (UserDoesNotBelongToAnyRoomException
             | UserConnectedToAnotherRoomException
             | UserNotConnectedException
-            | RoomNotFoundException e) {
+            | RoomNotFoundException
+            | InvalidParameterException e) {
           e.printStackTrace();
         }
         //iterator.remove();
@@ -1235,7 +1240,8 @@ public class ChatApplication implements Application, MessageListener {
         } catch (RoomNotFoundException
             | UserDoesNotBelongToAnyRoomException
             | UserNotConnectedException
-            | UserConnectedToAnotherRoomException exc) {
+            | UserConnectedToAnotherRoomException
+            | InvalidParameterException exc) {
           LOGGER.error("[error]: {}", exc.getMessage());
         }
       }
