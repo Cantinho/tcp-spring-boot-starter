@@ -1,4 +1,4 @@
-package br.com.cantinho.tcpspringbootstarter;
+package br.com.cantinho.tcpspringbootstarter.config;
 
 public final class ApplicationConfig {
 

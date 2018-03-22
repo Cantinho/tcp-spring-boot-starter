@@ -7,4 +7,6 @@ public interface Application {
   Object onConnect(final String uci);
 
   Object onDisconnect(final String uci);
+
+  void setListener(final ApplicationListener listener);
 }

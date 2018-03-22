@@ -11,6 +11,8 @@ public class EchoApplication implements Application {
    */
   private static final Logger LOGGER = LoggerFactory.getLogger(EchoApplication.class.getCanonicalName());
 
+  private ApplicationListener listener;
+
   @Override
   public Object process(Object... parameters) {
     LOGGER.debug("process");
@@ -33,5 +35,10 @@ public class EchoApplication implements Application {
   public Object onDisconnect(String uci) {
     LOGGER.debug("onDisconnect:{}", uci);
     return new Object();
+  }
+
+  @Override
+  public void setListener(ApplicationListener listener) {
+    this.listener = listener;
   }
 }

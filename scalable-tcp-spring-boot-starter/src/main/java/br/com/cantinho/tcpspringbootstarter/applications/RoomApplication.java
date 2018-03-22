@@ -15,6 +15,8 @@ public class RoomApplication implements Application {
 
   private final List<UserIdentifier> userIdentifiers = Collections.synchronizedList(new ArrayList<>());
 
+  private ApplicationListener listener;
+
   @Override
   public Object process(Object... parameters) {
     LOGGER.debug("process");
@@ -76,6 +78,11 @@ public class RoomApplication implements Application {
     }
     LOGGER.debug("onDisconnect:{}", uci);
     return new Object();
+  }
+
+  @Override
+  public void setListener(final ApplicationListener listener) {
+    this.listener = listener;
   }
 
   private class UserIdentifier{

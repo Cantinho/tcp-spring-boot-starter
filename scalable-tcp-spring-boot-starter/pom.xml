@@ -23,9 +23,26 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>9</java.version>
 		<spring-cloud.version>Finchley.BUILD-SNAPSHOT</spring-cloud.version>
+		<spring-data-redis>2.0.3.RELEASE</spring-data-redis>
+		<cglib.version>3.2.4</cglib.version>
+		<jedis.version>2.9.0</jedis.version>
+		<nosqlunit.version>0.10.0</nosqlunit.version>
+		<spring-data-commons.version>2.0.3.RELEASE</spring-data-commons.version>
 	</properties>
 
+
 	<dependencies>
+		<dependency>
+			<groupId>cglib</groupId>
+			<artifactId>cglib-nodep</artifactId>
+			<version>${cglib.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>redis.clients</groupId>
+			<artifactId>jedis</artifactId>
+			<version>${jedis.version}</version>
+			<type>jar</type>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-redis</artifactId>
