@@ -2,7 +2,9 @@ package br.com.cantinho.tcpspringbootstarter.redis.model;
 
 import java.io.Serializable;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
+import org.springframework.data.redis.core.index.Indexed;
 
 @RedisHash("ChatApplication")
 public class ChatRoom implements Serializable {
@@ -10,16 +12,19 @@ public class ChatRoom implements Serializable {
     /**
      * Id.
      */
+    @Id
     private String id;
 
     /**
      * Name.
      */
+    @Indexed
     private String name;
 
     /**
      * Onwer.
      */
+    @Indexed
     private String owner;
 
     public ChatRoom(final String id, final String name, final String owner) {
