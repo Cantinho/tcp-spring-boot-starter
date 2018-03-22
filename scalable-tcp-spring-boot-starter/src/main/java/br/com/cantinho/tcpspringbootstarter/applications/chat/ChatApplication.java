@@ -64,34 +64,33 @@ public class ChatApplication implements Application, MessageListener {
     final String body = new String(message.getBody());
     final CloudBag cloudBag = new Gson().fromJson(body, CloudBag.class);
 
-    LOGGER.info("Message received: {}", body);
-    LOGGER.info("cloudbag:" + cloudBag);
-    LOGGER.info("uuid: {}" + uuid);
-    LOGGER.info("uuid: {}" + cloudBag.getId());
     if (null == cloudBag || uuid.equals(cloudBag.getId())) {
       return;
     }
+
+    LOGGER.info("Message received: {}", body);
+
     fetchRoomRemotely();
     final List<Bag> responseBags = new ArrayList<>();
 
     switch (cloudBag.getEvent()) {
       case CloudEvents.CREATE_ROOM: {
-        LOGGER.info("CloudEvents.CREATE_ROOM");
+        LOGGER.debug("CloudEvents.CREATE_ROOM");
         // it's only necessary to update local repository
         break;
       }
       case CloudEvents.LEAVE_ROOM: {
-        LOGGER.info("CloudEvents.LEAVE_ROOM");
+        LOGGER.debug("CloudEvents.LEAVE_ROOM");
         responseBags.addAll(publishLocalLeaveRoom(cloudBag));
         break;
       }
       case CloudEvents.LEAVE_ROOM_OWNER: {
-        LOGGER.info("CloudEvents.LEAVE_ROOM_OWNER");
+        LOGGER.debug("CloudEvents.LEAVE_ROOM_OWNER");
         responseBags.addAll(publishLocalOwnerLeaveRoom(cloudBag));
         break;
       }
       case CloudEvents.SEND_SUR: {
-        LOGGER.info("CloudEvents.SEND_SUR");
+        LOGGER.debug("CloudEvents.SEND_SUR");
         responseBags.addAll(publishLocalSendMessage(cloudBag));
         break;
       }
@@ -569,9 +568,9 @@ public class ChatApplication implements Application, MessageListener {
 
     if(null != destination) {
       responseBags.add(new Bag(destination.getUci(), new ChatData(data), destination.getVersion()));
+    } else {
+      publish(CloudEvents.SEND_SUR, data);
     }
-
-    publish(CloudEvents.SEND_SUR, data);
 
     return responseBags;
   }
