@@ -28,4 +28,23 @@ public class CloudEvents {
    */
   public static final String SEND_SUR = "SEND_SUR";
 
+  /**
+   * Send Broadcast Message to Users in a Room (SEND_BUR)
+   * Envia mensagem para uma sala e todos os usuários dentro da mesma receberão a mensagem, com
+   * excessão do usuário que enviou a mensagem.
+   */
+  public static final String SEND_BUR = "SEND_BUR";
+
+  /**
+   * Send Broadcast Message to Specific Global User (SEND_SGU)
+   * Envia mensagem para um usuário específico que pode estar conectado no servidor.
+   */
+  public static final String SEND_SGU = "SEND_SGU";
+
+  /**
+   * Send Broadcast Message to All Global Users (SEND_BGU)
+   * Envia mensagem para todos os usuários conectados no servidor.
+   */
+  public static final String SEND_BGU = "SEND_BGU";
+
 }

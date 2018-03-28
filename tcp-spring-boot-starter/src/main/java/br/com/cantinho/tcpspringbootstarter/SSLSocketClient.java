@@ -171,7 +171,6 @@ public class SSLSocketClient {
     boolean bool = true;
 
     parse(ver, bytes, bool);
-
   }
 
   public static void parse(final Object... args) {

@@ -53,7 +53,7 @@ public class ChatApplication implements Application, MessageListener {
   }
 
   /**
-   * It's called every time a event comes from REDIS and this current isntance is subscribed to
+   * It's called every time a event comes from REDIS and this current instance is subscribed to
    * listen it.
    *
    * @param message A CloudBag instance.
@@ -91,7 +91,23 @@ public class ChatApplication implements Application, MessageListener {
       }
       case CloudEvents.SEND_SUR: {
         LOGGER.debug("CloudEvents.SEND_SUR");
-        responseBags.addAll(publishLocalSendMessage(cloudBag));
+        responseBags.addAll(publishLocalSendMessageToSpecificUserInRoom(cloudBag));
+        break;
+      }
+      case CloudEvents.SEND_BUR: {
+        LOGGER.debug("CloudEvents.SEND_BUR");
+        responseBags.addAll(publishLocalSendMessageToAllInRoom(cloudBag));
+        break;
+      }
+      case CloudEvents.SEND_SGU: {
+        LOGGER.debug("CloudEvents.SEND_SGU");
+        responseBags.addAll(publishLocalSendMessageToSpecificUser(cloudBag));
+        break;
+      }
+
+      case CloudEvents.SEND_BGU: {
+        LOGGER.debug("CloudEvents.SEND_BGU");
+        responseBags.addAll(publishLocalSendMessageToAllGlobalUsers(cloudBag));
         break;
       }
     }
@@ -131,6 +147,12 @@ public class ChatApplication implements Application, MessageListener {
         return joinRoomLocal(clazz, uci, data);
       case ChatCommands.SEND_SUR:
         return sendSpecificUserInRoomMessageRoomLocal(clazz, uci, data);
+      case ChatCommands.SEND_BUR:
+        return sendMessageToAllUsersInRoomLocal(clazz, uci, data);
+      case ChatCommands.SEND_SGU:
+        return sendMessageToSpecificGlobalUserLocal(clazz, uci, data);
+      case ChatCommands.SEND_BGU:
+        return sendMessageToAllGlobalUsersLocal(clazz, uci, data);
       case ChatCommands.KEEP_ALIVE:
         return keepAliveLocal(clazz, uci, data);
     }
@@ -575,6 +597,114 @@ public class ChatApplication implements Application, MessageListener {
     return responseBags;
   }
 
+
+  /**
+   * @param clazz a Class version instance.
+   * @param uci   a String Unique Connection Identifier.
+   * @param data  a ChatData data instance.
+   */
+  private List<Bag> sendMessageToSpecificGlobalUserLocal(
+      final Class clazz,
+      final String uci,
+      final ChatData data)
+      throws UserNotConnectedException, RoomNotFoundException, InvalidParameterException {
+
+    /**
+     * Fetch rooms from remote.
+     *
+     */
+    if(null == data) {
+      throw new InvalidParameterException("", "Data is null.");
+    }
+    if(StringUtils.isBlank(data.getFrom())) {
+      throw new InvalidParameterException(data.getFrom(), "Sender cannot be null or empty.");
+    }
+    if(StringUtils.isBlank(data.getTo())) {
+      throw new InvalidParameterException(data.getFrom(), "Destination cannot be null or empty.");
+    }
+
+    fetchRoomRemotely();
+
+    final List<Bag> responseBags = new LinkedList<>();
+
+    final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
+    UserIdentifier sender = null;
+    UserIdentifier destination = null;
+    while (iterator.hasNext()) {
+      final UserIdentifier user = iterator.next();
+      if (user.getName().equals(data.getFrom())) {
+        sender = user;
+      }
+      if (user.getName().equals(data.getTo())) {
+        destination = user;
+      }
+    }
+    if (null == sender) {
+      throw new UserNotConnectedException(uci, data.getFrom(),
+          "Sender user " + data.getFrom() + " is not connected to the server.");
+    }
+
+    if(null != destination) {
+      responseBags.add(new Bag(destination.getUci(), new ChatData(data), destination.getVersion()));
+    } else {
+      publish(CloudEvents.SEND_SGU, data);
+    }
+
+    return responseBags;
+  }
+
+
+  /**
+   * @param clazz a Class version instance.
+   * @param uci   a String Unique Connection Identifier.
+   * @param data  a ChatData data instance.
+   */
+  private List<Bag> sendMessageToAllGlobalUsersLocal(
+      final Class clazz,
+      final String uci,
+      final ChatData data)
+      throws UserNotConnectedException, InvalidParameterException {
+
+    /**
+     * Fetch rooms from remote.
+     *
+     */
+    if(null == data) {
+      throw new InvalidParameterException("", "Data is null.");
+    }
+    if(StringUtils.isBlank(data.getFrom())) {
+      throw new InvalidParameterException(data.getFrom(), "Sender cannot be null or empty.");
+    }
+
+    fetchRoomRemotely();
+
+    final List<Bag> responseBags = new LinkedList<>();
+
+    final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
+    UserIdentifier sender = null;
+    while (iterator.hasNext()) {
+      final UserIdentifier user = iterator.next();
+      if (user.getName().equals(data.getFrom())) {
+        sender = user;
+      }
+      responseBags.add(new Bag(user.getUci(), new ChatData(data), user.getVersion()));
+    }
+    if (null == sender) {
+      throw new UserNotConnectedException(uci, data.getFrom(),
+          "Sender user " + data.getFrom() + " is not connected to the server.");
+    }
+
+    publish(CloudEvents.SEND_BGU, data);
+
+    return responseBags;
+  }
+
+
+
+
+
+
+
   @Override
   public Object process(Object... parameters) {
     LOGGER.debug("process");
@@ -666,6 +796,126 @@ public class ChatApplication implements Application, MessageListener {
         ChatCommands.ResponseCode.OK, "Keep alive success for user " + data.getFrom() + "."));
     return responseBags;
   }
+
+
+  /**
+   * Sends message to all users in a room.
+   *
+   * @param clazz a Class version instance.
+   * @param uci   a String Unique Connection Identifier.
+   * @param data  a ChatData data instance.
+   */
+  private List<Bag> sendMessageToAllUsersInRoomLocal(
+      final Class clazz,
+      final String uci,
+      final ChatData data)
+      throws UserNotConnectedException, RoomNotFoundException, InvalidParameterException {
+
+    /**
+     *
+     * Fetch rooms from remote.
+     *
+     */
+    if(null == data) {
+      throw new InvalidParameterException("", "Data is null.");
+    }
+    if(StringUtils.isBlank(data.getFrom())) {
+      throw new InvalidParameterException(data.getFrom(), "Sender cannot be null or empty.");
+    }
+
+    fetchRoomRemotely();
+
+    final List<Bag> responseBags = new LinkedList<>();
+
+    final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
+    UserIdentifier sender = null;
+    while (iterator.hasNext()) {
+      final UserIdentifier user = iterator.next();
+      if (user.getName().equals(data.getFrom())) {
+        sender = user;
+      } else {
+        responseBags.add(new Bag(user.getUci(), new ChatData(data), user.getVersion()));
+      }
+    }
+    if (null == sender) {
+      throw new UserNotConnectedException(uci, data.getFrom(),
+          "Sender user " + data.getFrom() + " is not connected to the server.");
+    }
+    if (!rooms.containsKey(sender.getRoom())) {
+      throw new RoomNotFoundException(sender.getRoom(), "The " + sender.getRoom()
+          + " room was not found.");
+    }
+
+    publish(CloudEvents.SEND_BUR, data);
+
+    return responseBags;
+  }
+
+
+  /**
+   * Sends a message to all users in a room. The user should be connected to the server. The room
+   * should be an existent room. The user should be in the room.
+   *
+   * {
+   *   "ver" : "1.0",
+   *   "from" : "sender",
+   *   "to" : "room_name",
+   *   "msg" : "some message to broadcast to all users in a room described in field 'to'."
+   * }
+   *
+   * @param clazz a Class version instance.
+   * @param uci   a String Unique Connection Identifier.
+   * @param data  a ChatData data instance.
+   * @throws Exception if sender is not connected to the server, if sender room does not exist,
+   *                   if sender is not in the room he is trying to send a message to.
+   */
+  private List<Bag> sendMessageToAllUsersInRoom(
+      final Class clazz,
+      final String uci,
+      final ChatData data) throws UserNotConnectedException, RoomNotFoundException,
+      DistinctRoomException {
+    final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
+    UserIdentifier sender = null;
+    while (iterator.hasNext()) {
+      final UserIdentifier user = iterator.next();
+      if (user.getName().equals(data.getFrom())) {
+        sender = user;
+      }
+    }
+    if (null == sender) {
+      throw new UserNotConnectedException(uci, data.getFrom(),
+          "Sender user " + data.getFrom() + " is not connected to the server.");
+    }
+    if (!rooms.containsKey(sender.getRoom())) {
+      throw new RoomNotFoundException(sender.getRoom(), "The " + sender.getRoom() + " room was " +
+          "not " +
+          "found.");
+    }
+    if (!sender.getRoom().equals(data.getTo())) {
+      throw new DistinctRoomException(sender.getRoom(), data.getTo(),
+          "User is trying to send a message to a different room.");
+    }
+
+    // TODO: iterate over all users and build the correct data to send back
+    return null;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //  /**
 //   * @param clazz a Class version instance.
@@ -1225,20 +1475,37 @@ public class ChatApplication implements Application, MessageListener {
     }
   }
 
-  private List<Bag> publishLocalSendMessage(CloudBag cloudBag) {
+  /**
+   * Publishes send message to all global users.
+   *
+   * {
+   *   "ver" : "1.0",
+   *   "from" : "sender",
+   *   "to" : "",
+   *   "msg" : "a message to all global users."
+   * }
+   *
+   * @param cloudBag
+   * @return
+   */
+  private List<Bag> publishLocalSendMessageToAllGlobalUsers(final CloudBag cloudBag) {
     final List<Bag> responseBags = new ArrayList<>();
     final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
     while (iterator.hasNext()) {
       final UserIdentifier userIdentifier = iterator.next();
-      if(userIdentifier.getName().equals(cloudBag.getChatData().getTo())) {
-        final Bag bag = new Bag(userIdentifier.getUci(), cloudBag.getChatData(),
-            userIdentifier.getVersion());
-        responseBags.add(bag);
-      }
+      final Bag bag = new Bag(userIdentifier.getUci(), cloudBag.getChatData(),
+          userIdentifier.getVersion());
+      responseBags.add(bag);
     }
     return responseBags;
   }
 
+  /**
+   * Publishes local owner leaving room event.
+   *
+   * @param cloudBag
+   * @return
+   */
   private List<Bag> publishLocalOwnerLeaveRoom(final CloudBag cloudBag) {
     final List<Bag> responseBags = new ArrayList<>();
     final ListIterator<UserIdentifier> iterator = userIdentifiers.listIterator();
@@ -1259,12 +1526,80 @@ public class ChatApplication implements Application, MessageListener {
     return  responseBags;
   }
 
+
+  /**
+   * Publishes local leave room.
+   *
+   * @param cloudBag
+   * @return
+   */
   private List<Bag> publishLocalLeaveRoom(CloudBag cloudBag) {
     final List<Bag> responseBags = new ArrayList<>();
     final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
     while (iterator.hasNext()) {
       final UserIdentifier userIdentifier = iterator.next();
       if (cloudBag.getChatData().getMsg().equals(userIdentifier.getRoom())) {
+        final Bag bag = new Bag(userIdentifier.getUci(), cloudBag.getChatData(),
+            userIdentifier.getVersion());
+        responseBags.add(bag);
+      }
+    }
+    return responseBags;
+  }
+
+  /**
+   * Publishes local send message to specific user in a room.
+   *
+   * @param cloudBag
+   * @return
+   */
+  private List<Bag> publishLocalSendMessageToSpecificUserInRoom(final CloudBag cloudBag) {
+    final List<Bag> responseBags = new ArrayList<>();
+    final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
+    while (iterator.hasNext()) {
+      final UserIdentifier userIdentifier = iterator.next();
+      if(userIdentifier.getName().equals(cloudBag.getChatData().getTo()) && userIdentifier
+          .getRoom().equals(cloudBag.getChatData().getMsg())) {
+        final Bag bag = new Bag(userIdentifier.getUci(), cloudBag.getChatData(),
+            userIdentifier.getVersion());
+        responseBags.add(bag);
+      }
+    }
+    return responseBags;
+  }
+
+  /**
+   * Publishes local send message to specific user in a room.
+   *
+   * @param cloudBag
+   * @return
+   */
+  private List<Bag> publishLocalSendMessageToSpecificUser(final CloudBag cloudBag) {
+    final List<Bag> responseBags = new ArrayList<>();
+    final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
+    while (iterator.hasNext()) {
+      final UserIdentifier userIdentifier = iterator.next();
+      if(userIdentifier.getName().equals(cloudBag.getChatData().getTo())) {
+        final Bag bag = new Bag(userIdentifier.getUci(), cloudBag.getChatData(),
+            userIdentifier.getVersion());
+        responseBags.add(bag);
+      }
+    }
+    return responseBags;
+  }
+
+  /**
+   * Publishes local send message to all users in a room.
+   *
+   * @param cloudBag
+   * @return
+   */
+  private List<Bag> publishLocalSendMessageToAllInRoom(final CloudBag cloudBag) {
+    final List<Bag> responseBags = new ArrayList<>();
+    final Iterator<UserIdentifier> iterator = userIdentifiers.iterator();
+    while (iterator.hasNext()) {
+      final UserIdentifier userIdentifier = iterator.next();
+      if(userIdentifier.getRoom().equals(cloudBag.getChatData().getMsg())) {
         final Bag bag = new Bag(userIdentifier.getUci(), cloudBag.getChatData(),
             userIdentifier.getVersion());
         responseBags.add(bag);
