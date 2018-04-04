@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 public class RedisMessagePublisher implements MessagePublisher {
 
     @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private RedisTemplate<String, String> redisTemplate;
 
     @Autowired
     private ChannelTopic topic;
@@ -17,8 +17,7 @@ public class RedisMessagePublisher implements MessagePublisher {
     public RedisMessagePublisher() {
     }
 
-    public RedisMessagePublisher(final RedisTemplate<String, Object> redisTemplate, final ChannelTopic topic) {
-        this.redisTemplate = redisTemplate;
+    public RedisMessagePublisher(final ChannelTopic topic) {
         this.topic = topic;
     }
 

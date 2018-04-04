@@ -25,6 +25,7 @@ import br.com.cantinho.tcpspringbootstarter.redis.queue.RedisMessageSubscriber;
 import br.com.cantinho.tcpspringbootstarter.redis.repo.ChatRoomRepository;
 import br.com.cantinho.tcpspringbootstarter.tcp.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -44,6 +46,7 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.GenericToStringSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import redis.clients.jedis.JedisPoolConfig;
 
 @Configuration
@@ -61,17 +64,12 @@ public class TcpServerAutoConfiguration {
   @Value( "${tcp.server.secureEnabled}" )
   private boolean secureEnabled;
 
-  /**
-   * Redis host address.
-   */
-  @Value("${redis.host}")
-  private transient String redisHost;
-
-  /**
-   * Redis port address.
-   */
-  @Value("${redis.port}")
-  private transient Integer redisPort;
+  private final List<String> clusterNodes = Arrays.asList(
+      "elasticache-0001-001.wt16hv.0001.sae1.cache.amazonaws.com:6379",
+      "elasticache-0001-002.wt16hv.0001.sae1.cache.amazonaws.com:6379",
+      "elasticache-0002-001.wt16hv.0001.sae1.cache.amazonaws.com:6379",
+      "elasticache-0002-002.wt16hv.0001.sae1.cache.amazonaws.com:6379"
+  );
 
   /**
    * Creates a new TCP Server AutoStarterListener.
@@ -128,24 +126,14 @@ public class TcpServerAutoConfiguration {
   DataHandler dataHandler() throws DataHandlerException, AssignableException {
     LOGGER.info("dataHandler: " + BasicDataHandler.class.getCanonicalName());
 
-    final List<IConverter> echoConverters = new ArrayList<>();
-    echoConverters.add(new V1DataConverter());
-    echoConverters.add(new V2DataConverter());
-
-    final List<IConverter> roomConverters = new ArrayList<>();
-    roomConverters.add(new RoomV1DataConverter());
-    roomConverters.add(new RoomV2DataConverter());
-
     final List<IConverter> chatConverters = new ArrayList<>();
     chatConverters.add(new ChatV1DataConverter());
 
-    if(echoConverters.isEmpty() && roomConverters.isEmpty() && chatConverters.isEmpty()) {
+    if(chatConverters.isEmpty()) {
       throw new RuntimeException("Converters doesn't exist.");
     }
 
     final List<Assignable> assignables = new ArrayList<>();
-    assignables.add(new EchoAssignable(echoConverters, clientHandler(), new EchoApplication()));
-    assignables.add(new RoomAssignable(roomConverters, clientHandler(), new RoomApplication()));
     assignables.add(new ChatAssignable(chatConverters, clientHandler(), chatApplication()));
 
     if(assignables.isEmpty()) {
@@ -162,33 +150,21 @@ public class TcpServerAutoConfiguration {
     return chatRoomRepository;
   }
 
-  /**
-   * Creates a RedisConnectionFactory configured object to
-   * connect to a Redis instance.
-   *
-   * @return a RedisConnectionFactory instance.
-   */
   @Bean
-  public RedisConnectionFactory redisConnectionFactory() {
-    final JedisPoolConfig poolConfig = new JedisPoolConfig();
-    poolConfig.setMaxTotal(200);
-    poolConfig.setTestOnBorrow(true);
-    poolConfig.setTestOnReturn(true);
-
-    final JedisConnectionFactory connectionFactory = new JedisConnectionFactory(poolConfig);
-    connectionFactory.setUsePool(true);
-    connectionFactory.setHostName(redisHost);
-    connectionFactory.setPort(redisPort);
-
-    return connectionFactory;
+  RedisConnectionFactory connectionFactory() {
+    return new JedisConnectionFactory(new RedisClusterConfiguration(clusterNodes));
   }
 
   @Bean
-  public RedisTemplate<String, Object> redisTemplate() {
-    final RedisTemplate<String, Object> template = new RedisTemplate<String, Object>();
-    template.setConnectionFactory(redisConnectionFactory());
-    template.setValueSerializer(new GenericToStringSerializer<Object>(Object.class));
-    return template;
+  public RedisTemplate<String, String> redisTemplate(){
+
+    final RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
+    redisTemplate.setConnectionFactory(connectionFactory());
+    redisTemplate.setEnableTransactionSupport(true);
+    redisTemplate.setKeySerializer(new StringRedisSerializer());
+    redisTemplate.setValueSerializer(new StringRedisSerializer());
+
+    return redisTemplate;
   }
 
   @Bean
@@ -205,7 +181,7 @@ public class TcpServerAutoConfiguration {
   @Bean
   RedisMessageListenerContainer redisContainer() {
     final RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-    container.setConnectionFactory(redisConnectionFactory());
+    container.setConnectionFactory(connectionFactory());
     container.addMessageListener(messageListener(), topic());
     return container;
   }
@@ -213,7 +189,7 @@ public class TcpServerAutoConfiguration {
   @Bean
   @Scope("singleton")
   public MessagePublisher redisPublisher() {
-    return new RedisMessagePublisher(redisTemplate(), topic());
+    return new RedisMessagePublisher(topic());
   }
 
   @Bean
